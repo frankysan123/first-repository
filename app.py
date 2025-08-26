@@ -4,6 +4,22 @@ import pandas as pd
 import math
 import io
 import re
+import streamlit as st
+
+# --- Google Analytics ---
+GA_JS = """
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-ZQPK5GC464"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-ZQPK5GC464');
+</script>
+"""
+
+st.markdown(GA_JS, unsafe_allow_html=True)
 
 # Language translations
 TRANSLATIONS = {
