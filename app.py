@@ -576,7 +576,3 @@ if __name__ == "__main__":
     main()
         
 
-st.markdown(
-    "<iframe src='https://widgets.sociablekit.com/youtube-channel-videos/iframe/25592908' frameborder='0' width='100%' height='1000'></iframe>",
-    unsafe_allow_html=True
-)
