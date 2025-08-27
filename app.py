@@ -4,19 +4,12 @@ import pandas as pd
 import math
 import io
 import re
-import streamlit as st
 
-if "visitas" not in st.session_state:
-    st.session_state["visitas"] = 0
-
-# Solo contar una vez por usuario
-if "ya_conto" not in st.session_state:
-    st.session_state["visitas"] += 1
-    st.session_state["ya_conto"] = True
-
-st.subheader(f"👀 Visitas totales (temporales): {st.session_state['visitas']}")
-
-
+# To show a hit counter image in Streamlit, use markdown with unsafe_allow_html=True
+st.markdown(
+    '<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fpolar2xy.streamlit.app%2F&label=&icon=github&color=%233dd5f3&message=&style=flat&tz=UTC">',
+    unsafe_allow_html=True
+)
 
 # Language translations
 TRANSLATIONS = {
