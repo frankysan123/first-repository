@@ -11,7 +11,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # Language translations
 TRANSLATIONS = {
     'en': {
@@ -232,6 +231,24 @@ def main():
         layout="wide",
         initial_sidebar_state="auto"
     )
+    
+    # Add offline status indicator
+    st.markdown("""
+    <style>
+    .offline-indicator {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background-color: #28a745;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        z-index: 999;
+    }
+    </style>
+    <div class="offline-indicator">📱 Offline Ready</div>
+    """, unsafe_allow_html=True)
     
     # Initialize language in session state
     if 'language' not in st.session_state:
@@ -575,4 +592,3 @@ def main():
 if __name__ == "__main__":
     main()
         
-
