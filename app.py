@@ -4,7 +4,7 @@ import pandas as pd
 import math
 import io
 import re
-import streamlit as st
+
 
 # --- Google Analytics ---
 GA_JS = """
@@ -21,6 +21,8 @@ GA_JS = """
 
 st.markdown(GA_JS, unsafe_allow_html=True)
 
+st.title("Mi app con Google Analytics")
+st.write("Prueba de integración")
 # Language translations
 TRANSLATIONS = {
     'en': {
