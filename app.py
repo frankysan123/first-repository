@@ -7,9 +7,10 @@ import re
 
 # To show a hit counter image in Streamlit, use markdown with unsafe_allow_html=True
 st.markdown(
-    '<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fpolar2xy.streamlit.app%2F&label=&icon=github&color=%233dd5f3&message=&style=flat&tz=UTC">',
+    '<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fpolar2xy.streamlit.app%2F&label=visitas&icon=github&color=%233dd5f3&message=&style=flat&tz=UTC">',
     unsafe_allow_html=True
 )
+
 
 # Language translations
 TRANSLATIONS = {
@@ -574,3 +575,8 @@ def main():
 if __name__ == "__main__":
     main()
         
+
+st.markdown(
+    "<iframe src='https://widgets.sociablekit.com/youtube-channel-videos/iframe/25592908' frameborder='0' width='100%' height='1000'></iframe>",
+    unsafe_allow_html=True
+)
