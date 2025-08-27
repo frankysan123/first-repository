@@ -5,20 +5,16 @@ import math
 import io
 import re
 import streamlit as st
-import requests
 
-# Contar solo una vez por sesión de usuario
-if "counted_visit" not in st.session_state:
-    # Cambia "mi-azimut-app" por un nombre único para tu app
-    r = requests.get("https://api.countapi.xyz/hit/mi-azimut-app/visitas")
-    st.session_state.counted_visit = True
-else:
-    r = requests.get("https://api.countapi.xyz/get/mi-azimut-app/visitas")
+if "visitas" not in st.session_state:
+    st.session_state["visitas"] = 0
 
-total = r.json().get("value", 0)
-st.caption(f"👀 Visitas totales: {total}")
-st.subheader(f"👀 Visitas totales: {total}")
+# Solo contar una vez por usuario
+if "ya_conto" not in st.session_state:
+    st.session_state["visitas"] += 1
+    st.session_state["ya_conto"] = True
 
+st.subheader(f"👀 Visitas totales (temporales): {st.session_state['visitas']}")
 
 
 
