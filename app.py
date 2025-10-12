@@ -617,6 +617,12 @@ def main():
             if input_method == "Manual Entry":
                 st.subheader("Enter Data")
                 
+                # Initialize input fields in session state
+                if 'quick_az_input' not in st.session_state:
+                    st.session_state.quick_az_input = ""
+                if 'quick_dist_input' not in st.session_state:
+                    st.session_state.quick_dist_input = 0.0
+                
                 # Editable data table
                 if not st.session_state.batch_data.empty:
                     st.write("**Current Data (Editable):**")
@@ -649,55 +655,70 @@ def main():
                     # Update session state only if data changed
                     if not edited_df.equals(st.session_state.batch_data):
                         st.session_state.batch_data = edited_df
-                        st.success("✅ Data updated!")
                 
-                # Quick add form (no rerun needed)
+                # Quick add form
                 st.write("**Quick Add Entry:**")
                 col1, col2, col3 = st.columns([2, 1, 1])
                 
                 with col1:
                     new_azimuth = st.text_input(
                         "Azimuth", 
-                        value="",
+                        value=st.session_state.quick_az_input,
                         placeholder="26 56 7.00 or 26.935",
                         help="Easy mobile formats: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935",
-                        key="quick_azimuth"
+                        key="quick_azimuth_input"
                     )
+                    # Update session state with current value
+                    st.session_state.quick_az_input = new_azimuth
                 
                 with col2:
                     new_distance = st.number_input(
                         "Distance", 
-                        value=0.0,
+                        value=st.session_state.quick_dist_input,
                         step=0.001, 
                         format="%.3f",
-                        key="quick_distance"
+                        min_value=0.0,
+                        key="quick_distance_input"
                     )
+                    # Update session state with current value
+                    st.session_state.quick_dist_input = new_distance
                 
                 with col3:
+                    st.write("")  # Spacing
+                    st.write("")  # Spacing
                     if st.button("➕ Add", use_container_width=True, type="primary"):
-                        if new_azimuth and new_distance > 0:
+                        if new_azimuth.strip() and new_distance > 0:
                             new_row = pd.DataFrame({
-                                'Azimuth': [new_azimuth], 
+                                'Azimuth': [new_azimuth.strip()], 
                                 'Distance': [new_distance]
                             })
                             st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
-                            st.success("✅ Added!")
-                            # No st.rerun() - just update state
+                            
+                            # DON'T clear inputs - keep them for repeated entries
+                            st.success("✅ Added! (Inputs kept for next entry)")
                         else:
-                            st.warning("Enter valid values")
+                            st.warning("⚠️ Enter valid values")
+                
+                # Optional: Clear inputs button
+                if st.button("🔄 Clear Input Fields", use_container_width=True):
+                    st.session_state.quick_az_input = ""
+                    st.session_state.quick_dist_input = 0.0
+                    st.rerun()
                 
                 st.markdown("---")
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.button("🗑️ Clear All", use_container_width=True):
+                    if st.button("🗑️ Clear All Data", use_container_width=True):
                         st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
+                        st.rerun()
                 with col2:
                     if st.button("📝 Load Examples", use_container_width=True):
                         st.session_state.batch_data = pd.DataFrame({
                             'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
                             'Distance': [5.178, 1.000, 1.000, 1.000]
                         })
+                        st.rerun()
                 
             else:  # Upload CSV
                 uploaded_file = st.file_uploader(
