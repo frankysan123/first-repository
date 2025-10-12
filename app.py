@@ -378,21 +378,25 @@ def create_polygon_plot(results_df, ref_x, ref_y, lang='en'):
             start_y = results_df.iloc[i-1]['Y_Coordinate']
         
         # Add arrow annotation for each segment
-       fig.add_annotation(
-        x=row['X_Coordinate'],
-        y=row['Y_Coordinate'],
-        ax=start_x,
-        ay=start_y,
-        showarrow=True,
-        arrowhead=2,
-        arrowsize=1,
-        arrowwidth=1.5,
-        arrowcolor='rgba(0,100,200,0.5)',
-        text="",  # ← sin texto
-        font=dict(size=1, color='rgba(0,0,0,0)'),  # texto invisible
-        bgcolor='rgba(0,0,0,0)',  # fondo transparente
-        standoff=0
-    )
+        fig.add_annotation(
+            x=row['X_Coordinate'],
+            y=row['Y_Coordinate'],
+            ax=start_x,
+            ay=start_y,
+            xref='x',
+            yref='y',
+            axref='x',
+            ayref='y',
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=1.5,
+            arrowcolor='rgba(0,100,200,0.5)',
+            text=f"Az: {row['Azimuth_Decimal']:.1f}°",
+            font=dict(size=8, color='darkblue'),
+            bgcolor='rgba(255,255,255,0.7)',
+            standoff=5
+        )
     
     # Calculate polygon area
     coordinates = [(ref_x, ref_y)] + list(zip(results_df['X_Coordinate'], results_df['Y_Coordinate']))
