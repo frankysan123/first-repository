@@ -4,6 +4,8 @@ import pandas as pd
 import math
 import io
 import re
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 # To show a hit counter image in Streamlit, use markdown with unsafe_allow_html=True
 st.markdown(
@@ -11,7 +13,75 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Language translations
+# Custom CSS for better UI
+st.markdown("""
+<style>
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .main-header {
+            font-size: 1.5rem !important;
+        }
+    }
+    
+    .main-header {
+        font-size: 2.2rem;
+        color: #1f77b4;
+        text-align: center;
+        margin-bottom: 1rem;
+        font-weight: bold;
+    }
+    
+    /* Plotly controls styling */
+    .modebar {
+        position: absolute !important;
+        top: 50px !important;
+        right: 15px !important;
+        z-index: 1000 !important;
+    }
+    
+    .modebar-btn {
+        width: 32px !important;
+        height: 32px !important;
+        margin: 2px !important;
+        border-radius: 6px !important;
+        background-color: rgba(30, 30, 30, 0.95) !important;
+        border: 1.5px solid #1f77b4 !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+    }
+    
+    .modebar-btn svg path {
+        fill: white !important;
+    }
+    
+    .modebar-btn:hover {
+        background-color: #1f77b4 !important;
+        border-color: #4a9eff !important;
+        transform: scale(1.08);
+        transition: all 0.2s ease;
+    }
+    
+    .modebar-group {
+        background-color: rgba(30, 30, 30, 0.95) !important;
+        padding: 4px !important;
+        border-radius: 8px !important;
+        margin: 3px !important;
+        box-shadow: 0 3px 12px rgba(0,0,0,0.4) !important;
+    }
+    
+    @media (max-width: 768px) {
+        .modebar {
+            top: 45px !important;
+            right: 10px !important;
+        }
+        .modebar-btn {
+            width: 38px !important;
+            height: 38px !important;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Language translations (keeping original translations)
 TRANSLATIONS = {
     'en': {
         'title': '🧭 Azimuth to Coordinates Converter',
@@ -48,20 +118,7 @@ TRANSLATIONS = {
         'try_format': 'Try format like: 45°30\'15" or 120°0\'0\'\'',
         'azimuth_warning': '⚠️ Azimuth {:.3f}° is outside 0-360° range',
         'enter_azimuth': '👆 Enter an azimuth value above',
-        'instructions_title': '### How to Use This Application',
-        'excel_compatibility': '#### 🎯 Excel Formula Compatibility',
-        'excel_compatibility_text': 'This application uses your exact Excel formulas for coordinate conversion, ensuring identical results to your spreadsheet calculations.',
-        'mobile_formats': '#### 📱 Mobile-Friendly Input Formats',
-        'mobile_formats_text': '**Easy ways to enter azimuth without special symbols:**\n- **Spaces**: `26 56 7.00` (degrees minutes seconds)\n- **Dashes**: `26-56-7.00`\n- **Colons**: `26:56:7.00`\n- **Underscores**: `26_56_7.00`\n- **Decimal**: `26.935` (direct decimal degrees)\n- **Traditional**: `26°56\'7.00"` (if you can type symbols)',
-        'single_conversion_help': '#### 📍 Single Conversion',
-        'single_conversion_steps': '1. Set reference point coordinates in sidebar (default: 1000, 1000)\n2. Choose input format: Mobile-friendly DMS or Decimal\n3. Input azimuth using any easy format above\n4. Input distance from reference point\n5. View calculated X,Y coordinates (displayed to 3 decimal places)',
-        'batch_conversion_help': '#### 📊 Batch Conversion & Polygon Traversal',
-        'batch_conversion_steps': '1. Choose between manual entry or CSV upload\n2. For manual entry: add rows using mobile-friendly formats\n3. For CSV upload: ensure columns are named \'Azimuth\' and \'Distance\'\n4. Click "Convert All" to process all points\n5. Each point becomes the reference for the next (polygon traversal)\n6. Check polygon closure status and download results',
-        'examples_title': '#### 📋 Examples',
-        'mobile_example': '**Mobile-Friendly Example:**\n- **Input**: Azimuth = `26 56 7.00`, Distance = 5.178, Reference Point = (1000,1000)\n- **Result**: X = 1002.346, Y = 1004.616',
-        'decimal_example': '**Decimal Example:**\n- **Input**: Azimuth = 90.0, Distance = 10, Reference Point = (0,0)\n- **Result**: X = 10.000, Y = 0.000',
-        'tips_title': '#### 💡 Tips',
-        'tips_text': '- Ensure azimuth values are between 0-360 degrees\n- Use consistent units for distance measurements\n- Consider your coordinate system when choosing convention\n- For surveying applications, North convention is typically used\n- All calculations are rounded to 3 decimal places for precision',
+        'visualization': '📈 Visualization',
     },
     'es': {
         'title': '🧭 Convertidor de Azimut a Coordenadas',
@@ -98,20 +155,7 @@ TRANSLATIONS = {
         'try_format': 'Intenta formato como: 45°30\'15" o 120°0\'0\'\'',
         'azimuth_warning': '⚠️ Azimut {:.3f}° está fuera del rango 0-360°',
         'enter_azimuth': '👆 Ingresa un valor de azimut arriba',
-        'instructions_title': '### Cómo Usar Esta Aplicación',
-        'excel_compatibility': '#### 🎯 Compatibilidad con Fórmulas de Excel',
-        'excel_compatibility_text': 'Esta aplicación usa tus fórmulas exactas de Excel para conversión de coordenadas, asegurando resultados idénticos a tus cálculos de hoja de cálculo.',
-        'mobile_formats': '#### 📱 Formatos de Entrada Amigables para Móvil',
-        'mobile_formats_text': '**Formas fáciles de ingresar azimut sin símbolos especiales:**\n- **Espacios**: `26 56 7.00` (grados minutos segundos)\n- **Guiones**: `26-56-7.00`\n- **Dos puntos**: `26:56:7.00`\n- **Guiones bajos**: `26_56_7.00`\n- **Decimal**: `26.935` (grados decimales directos)\n- **Tradicional**: `26°56\'7.00"` (si puedes escribir símbolos)',
-        'single_conversion_help': '#### 📍 Conversión Individual',
-        'single_conversion_steps': '1. Establece coordenadas del punto de referencia en la barra lateral (por defecto: 1000, 1000)\n2. Elige formato de entrada: GMS amigable para móvil o Decimal\n3. Ingresa azimut usando cualquier formato fácil de arriba\n4. Ingresa distancia desde el punto de referencia\n5. Ve las coordenadas X,Y calculadas (mostradas con 3 decimales)',
-        'batch_conversion_help': '#### 📊 Conversión por Lotes y Recorrido de Polígono',
-        'batch_conversion_steps': '1. Elige entre entrada manual o carga de CSV\n2. Para entrada manual: agrega filas usando formatos amigables para móvil\n3. Para carga CSV: asegúrate que las columnas se llamen \'Azimuth\' y \'Distance\'\n4. Haz clic en "Convert All" para procesar todos los puntos\n5. Cada punto se convierte en la referencia para el siguiente (recorrido de polígono)\n6. Verifica el estado de cierre del polígono y descarga resultados',
-        'examples_title': '#### 📋 Ejemplos',
-        'mobile_example': '**Ejemplo Amigable para Móvil:**\n- **Entrada**: Azimut = `26 56 7.00`, Distancia = 5.178, Punto de Referencia = (1000,1000)\n- **Resultado**: X = 1002.346, Y = 1004.616',
-        'decimal_example': '**Ejemplo Decimal:**\n- **Entrada**: Azimut = 90.0, Distancia = 10, Punto de Referencia = (0,0)\n- **Resultado**: X = 10.000, Y = 0.000',
-        'tips_title': '#### 💡 Consejos',
-        'tips_text': '- Asegúrate que los valores de azimut estén entre 0-360 grados\n- Usa unidades consistentes para medidas de distancia\n- Considera tu sistema de coordenadas al elegir convención\n- Para aplicaciones de topografía, la convención Norte se usa típicamente\n- Todos los cálculos se redondean a 3 decimales para precisión',
+        'visualization': '📈 Visualización',
     }
 }
 
@@ -120,101 +164,52 @@ def get_text(key, lang='en'):
     return TRANSLATIONS.get(lang, TRANSLATIONS['en']).get(key, key)
 
 def calculate_polygon_area(coordinates):
-    """
-    Calculate polygon area using the Shoelace formula
-    Input: list of (x, y) coordinate tuples
-    Output: area in square units
-    Formula: A = ½ |Σ(xᵢyᵢ₊₁ - yᵢxᵢ₊₁)|
-    """
+    """Calculate polygon area using the Shoelace formula"""
     if len(coordinates) < 3:
         return 0.0
     
     n = len(coordinates)
     area = 0.0
     
-    # Apply Shoelace formula
     for i in range(n):
-        j = (i + 1) % n  # Next vertex (wrap around to 0 for last vertex)
-        area += coordinates[i][0] * coordinates[j][1]  # x₁y₂ + x₂y₃ + ...
-        area -= coordinates[i][1] * coordinates[j][0]  # y₁x₂ + y₂x₃ + ...
+        j = (i + 1) % n
+        area += coordinates[i][0] * coordinates[j][1]
+        area -= coordinates[i][1] * coordinates[j][0]
     
     return abs(area) / 2.0
 
 def azimuth_to_coordinates(azimuth, distance, ref_x=0.0, ref_y=0.0, azimuth_convention="north"):
-    """
-    Convert azimuth and distance to X,Y coordinates using Excel formulas
-    
-    Excel formulas:
-    - X coordinate: SIN(RADIANS(F7))*G7 + ref_x
-    - Y coordinate: G7*COS(RADIANS(F7)) + ref_y
-    Where F7=azimuth, G7=distance
-    
-    Parameters:
-    - azimuth: angle in degrees (F7)
-    - distance: distance/radius (G7)
-    - ref_x, ref_y: reference point coordinates
-    - azimuth_convention: not used in Excel formula, keeping for compatibility
-    
-    Returns:
-    - x, y: calculated coordinates
-    """
-    # Convert azimuth to radians (RADIANS(F7))
+    """Convert azimuth and distance to X,Y coordinates using Excel formulas"""
     azimuth_rad = math.radians(azimuth)
-    
-    # Excel formulas exactly as provided:
-    # X coordinate: SIN(RADIANS(F7))*G7
     x_offset = math.sin(azimuth_rad) * distance
-    
-    # Y coordinate: G7*COS(RADIANS(F7))  
     y_offset = distance * math.cos(azimuth_rad)
-    
-    # Add to reference point
     x = ref_x + x_offset
     y = ref_y + y_offset
-    
-    # Round to 3 decimal places
     return round(x, 3), round(y, 3)
 
 def parse_dms_to_decimal(dms_string):
-    """
-    Convert degrees-minutes-seconds format to decimal degrees using Excel formula
-    Excel formula: =(((E7/60)+D7)/60+C7)
-    Where C7=degrees, D7=minutes, E7=seconds
-    Supports comma as decimal separator (26°56'7,00'')
-    """
+    """Convert degrees-minutes-seconds format to decimal degrees"""
     try:
-        # Remove whitespace and normalize the string
         dms_string = str(dms_string).strip()
-        
-        # Replace comma with dot for decimal parsing
         dms_string = dms_string.replace(',', '.')
         
-        # Multiple patterns for easy mobile typing:
         patterns = [
-            # Traditional symbols: 26°56'7.00" or 26d56m7.00s
             r'(\d+(?:\.\d+)?)[°d]\s*(\d+(?:\.\d+)?)[\'m]\s*(\d+(?:\.\d+)?)[\"\'s]?',
-            # Space separated: "26 56 7.00"
             r'^(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)$',
-            # Dash separated: "26-56-7.00"
             r'^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$',
-            # Colon separated: "26:56:7.00"
             r'^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$',
-            # Underscore separated: "26_56_7.00"
             r'^(\d+(?:\.\d+)?)_(\d+(?:\.\d+)?)_(\d+(?:\.\d+)?)$'
         ]
         
         for pattern in patterns:
             match = re.search(pattern, dms_string)
             if match and len(match.groups()) == 3:
-                degrees = float(match.group(1))  # C7
-                minutes = float(match.group(2))  # D7
-                seconds = float(match.group(3))  # E7
-                
-                # Excel formula: =(((E7/60)+D7)/60+C7)
+                degrees = float(match.group(1))
+                minutes = float(match.group(2))
+                seconds = float(match.group(3))
                 decimal_degrees = (((seconds / 60.0) + minutes) / 60.0) + degrees
                 return decimal_degrees
         
-        # Fallback: try to parse as a simple decimal number
         return float(dms_string.replace(',', '.'))
     except (ValueError, AttributeError):
         return None
@@ -223,8 +218,239 @@ def validate_azimuth(azimuth):
     """Validate azimuth value is within 0-360 degrees"""
     return 0 <= azimuth <= 360
 
+def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='en'):
+    """Create interactive plot for single point conversion"""
+    fig = go.Figure()
+    
+    # Reference point
+    fig.add_trace(go.Scatter(
+        x=[ref_x],
+        y=[ref_y],
+        mode='markers+text',
+        name='Reference',
+        marker=dict(color='blue', size=16, symbol='circle'),
+        text=['REF'],
+        textposition='bottom center',
+        textfont=dict(size=14, color='blue'),
+        hovertemplate='<b>Reference</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+    ))
+    
+    # Calculated point
+    fig.add_trace(go.Scatter(
+        x=[x],
+        y=[y],
+        mode='markers+text',
+        name='Target Point',
+        marker=dict(color='red', size=16, symbol='diamond'),
+        text=['P1'],
+        textposition='top center',
+        textfont=dict(size=14, color='red'),
+        hovertemplate='<b>Point</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+    ))
+    
+    # Line connecting points
+    fig.add_trace(go.Scatter(
+        x=[ref_x, x],
+        y=[ref_y, y],
+        mode='lines',
+        name=f'Azimuth {azimuth:.2f}°',
+        line=dict(color='green', width=3, dash='dash'),
+        hovertemplate=f'<b>Distance: {distance:.3f}</b><extra></extra>'
+    ))
+    
+    # Add arrow annotation
+    fig.add_annotation(
+        x=x,
+        y=y,
+        ax=ref_x,
+        ay=ref_y,
+        xref='x',
+        yref='y',
+        axref='x',
+        ayref='y',
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1.5,
+        arrowwidth=2,
+        arrowcolor='green'
+    )
+    
+    fig.update_layout(
+        title={
+            'text': f'Azimuth Conversion: {azimuth:.2f}° | Distance: {distance:.3f}',
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 16}
+        },
+        xaxis_title='X (m)',
+        yaxis_title='Y (m)',
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.2,
+            xanchor="center",
+            x=0.5
+        ),
+        hovermode='closest',
+        height=600,
+        yaxis=dict(scaleanchor="x", scaleratio=1),
+        plot_bgcolor='rgba(240,240,240,0.5)',
+        dragmode='pan'
+    )
+    
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
+    
+    config = {
+        'displayModeBar': True,
+        'displaylogo': False,
+        'modeBarStyle': {
+            'bgcolor': 'rgba(30, 30, 30, 0.95)',
+            'color': 'white'
+        },
+        'modeBarButtonSize': 20,
+        'doubleClick': 'reset',
+        'scrollZoom': True
+    }
+    
+    return fig, config
+
+def create_polygon_plot(results_df, ref_x, ref_y, lang='en'):
+    """Create interactive plot for polygon traversal"""
+    fig = go.Figure()
+    
+    # Extract all coordinates including initial reference
+    all_x = [ref_x] + results_df['X_Coordinate'].tolist()
+    all_y = [ref_y] + results_df['Y_Coordinate'].tolist()
+    
+    # Polygon outline
+    fig.add_trace(go.Scatter(
+        x=all_x + [all_x[0]],  # Close the polygon
+        y=all_y + [all_y[0]],
+        mode='lines',
+        name='Polygon',
+        line=dict(color='blue', width=3),
+        fill='toself',
+        fillcolor='rgba(31, 119, 180, 0.2)',
+        hoverinfo='skip'
+    ))
+    
+    # Reference point
+    fig.add_trace(go.Scatter(
+        x=[ref_x],
+        y=[ref_y],
+        mode='markers+text',
+        name='Start/End',
+        marker=dict(color='green', size=18, symbol='star'),
+        text=['START'],
+        textposition='bottom center',
+        textfont=dict(size=12, color='green', family='Arial Black'),
+        hovertemplate='<b>Start Point</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+    ))
+    
+    # All calculated points
+    if len(results_df) <= 20:  # Show labels only if <= 20 points
+        labels = [f'P{i+1}' for i in range(len(results_df))]
+        mode = 'markers+text'
+    else:
+        labels = None
+        mode = 'markers'
+    
+    fig.add_trace(go.Scatter(
+        x=results_df['X_Coordinate'],
+        y=results_df['Y_Coordinate'],
+        mode=mode,
+        name='Points',
+        marker=dict(color='red', size=10, symbol='circle'),
+        text=labels,
+        textposition='top center',
+        textfont=dict(size=9),
+        hovertemplate='<b>Point %{pointNumber}</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+    ))
+    
+    # Add azimuth lines with arrows
+    for i, row in results_df.iterrows():
+        if i == 0:
+            start_x, start_y = ref_x, ref_y
+        else:
+            start_x = results_df.iloc[i-1]['X_Coordinate']
+            start_y = results_df.iloc[i-1]['Y_Coordinate']
+        
+        # Add arrow annotation for each segment
+        fig.add_annotation(
+            x=row['X_Coordinate'],
+            y=row['Y_Coordinate'],
+            ax=start_x,
+            ay=start_y,
+            xref='x',
+            yref='y',
+            axref='x',
+            ayref='y',
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=1.5,
+            arrowcolor='rgba(0,100,200,0.5)',
+            text=f"Az: {row['Azimuth_Decimal']:.1f}°",
+            font=dict(size=8, color='darkblue'),
+            bgcolor='rgba(255,255,255,0.7)',
+            standoff=5
+        )
+    
+    # Calculate polygon area
+    coordinates = [(ref_x, ref_y)] + list(zip(results_df['X_Coordinate'], results_df['Y_Coordinate']))
+    area = calculate_polygon_area(coordinates)
+    
+    fig.update_layout(
+        title={
+            'text': f'Polygon Traversal | Points: {len(results_df)} | Area: {area:.3f} m²',
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 16}
+        },
+        xaxis_title='X (m)',
+        yaxis_title='Y (m)',
+        showlegend=True,
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=-0.15,
+            xanchor="center",
+            x=0.5
+        ),
+        hovermode='closest',
+        height=700,
+        yaxis=dict(scaleanchor="x", scaleratio=1),
+        plot_bgcolor='rgba(240,240,240,0.5)',
+        dragmode='pan'
+    )
+    
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
+    
+    config = {
+        'displayModeBar': True,
+        'displaylogo': False,
+        'modeBarStyle': {
+            'bgcolor': 'rgba(30, 30, 30, 0.95)',
+            'color': 'white'
+        },
+        'modeBarButtonSize': 20,
+        'doubleClick': 'reset',
+        'scrollZoom': True,
+        'toImageButtonOptions': {
+            'format': 'png',
+            'filename': 'polygon_plot',
+            'height': 1000,
+            'width': 1400,
+            'scale': 2
+        }
+    }
+    
+    return fig, config
+
 def main():
-    # Configure for mobile-friendly layout
     st.set_page_config(
         page_title="Azimuth Converter",
         page_icon="🧭",
@@ -232,7 +458,7 @@ def main():
         initial_sidebar_state="auto"
     )
     
-    # Add offline status indicator
+    # Offline indicator
     st.markdown("""
     <style>
     .offline-indicator {
@@ -250,11 +476,11 @@ def main():
     <div class="offline-indicator">📱 Offline Ready</div>
     """, unsafe_allow_html=True)
     
-    # Initialize language in session state
+    # Initialize language
     if 'language' not in st.session_state:
         st.session_state.language = 'en'
     
-    # Language selector in sidebar
+    # Sidebar
     st.sidebar.header(get_text('settings', st.session_state.language))
     
     # Language toggle
@@ -273,31 +499,30 @@ def main():
     st.title(get_text('title', lang))
     st.markdown(get_text('subtitle', lang))
     
-    # Keep convention for display but not used in calculation
     azimuth_convention = "excel"
     
-    # Reference point settings
+    # Reference point
     st.sidebar.subheader(get_text('reference_point', lang))
     ref_x = st.sidebar.number_input(get_text('reference_x', lang), value=1000.0, help=get_text('reference_x_help', lang))
     ref_y = st.sidebar.number_input(get_text('reference_y', lang), value=1000.0, help=get_text('reference_y_help', lang))
     
-    # Main interface tabs
-    tab1, tab2, tab3 = st.tabs([get_text('single_conversion', lang), get_text('batch_conversion', lang), get_text('instructions', lang)])
+    # Tabs
+    tab1, tab2 = st.tabs([get_text('single_conversion', lang), get_text('batch_conversion', lang)])
     
     with tab1:
         st.header(get_text('single_point_conversion', lang))
         
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([1, 1.4])
         
         with col1:
-            # Input method selection
+            # Input method
             input_method = st.radio(
                 get_text('azimuth_input_format', lang),
                 [get_text('dms_format', lang), get_text('decimal_format', lang)],
                 horizontal=True
             )
             
-            if input_method.startswith(get_text('dms_format', lang)[:3]):  # Check if starts with "DMS" or "GMS"
+            if input_method.startswith(get_text('dms_format', lang)[:3]):
                 azimuth_input = st.text_input(
                     get_text('azimuth_easy_input', lang),
                     value="",
@@ -306,7 +531,6 @@ def main():
                 )
                 
                 if azimuth_input:
-                    # Parse DMS to decimal
                     azimuth = parse_dms_to_decimal(azimuth_input)
                     if azimuth is None:
                         st.error(f"{get_text('parse_error', lang)} '{azimuth_input}'. {get_text('try_format', lang)}")
@@ -337,9 +561,9 @@ def main():
                 format="%.3f",
                 help=get_text('distance_help', lang)
             )
-        
-        with col2:
-            if azimuth > 0 or distance > 0:  # Show results if any input provided
+            
+            # Results
+            if azimuth > 0 or distance > 0:
                 try:
                     x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
                     
@@ -350,245 +574,266 @@ def main():
                     with col_y:
                         st.metric(get_text('y_coordinate', lang), f"{y:.3f}")
                     
-                    # Simple summary line
                     st.write(f"**{get_text('input_summary', lang)}** Azimuth {azimuth:.3f}°, {get_text('distance', lang)} {distance}, {get_text('reference_point', lang)} ({ref_x}, {ref_y})")
                         
                 except Exception as e:
                     st.error(f"{get_text('calculation_error', lang)} {str(e)}")
             else:
                 st.info(get_text('enter_values', lang))
+        
+        with col2:
+            st.subheader(get_text('visualization', lang))
+            
+            if azimuth > 0 or distance > 0:
+                try:
+                    x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
+                    fig, config = create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang)
+                    st.plotly_chart(fig, use_container_width=True, config=config)
+                except Exception as e:
+                    st.error(f"Visualization error: {str(e)}")
+            else:
+                st.info("👈 Enter values to see visualization")
     
     with tab2:
-        st.header("Batch Conversion")
-        st.markdown("Enter multiple azimuth and distance pairs for bulk conversion.")
+        st.header("Batch Conversion & Polygon Visualization")
         
-        # Initialize session state for batch data
+        # Initialize session state
         if 'batch_data' not in st.session_state:
             st.session_state.batch_data = pd.DataFrame({
                 'Azimuth': [],
                 'Distance': []
             })
         
-        # Data input options
+        # Input method
         input_method = st.radio(
             "Input Method",
             ["Manual Entry", "Upload CSV"],
             horizontal=True
         )
         
-        if input_method == "Manual Entry":
-            # Simple approach using form inputs for better control
-            st.subheader("Enter Data")
-            
-            # Display current data
-            if not st.session_state.batch_data.empty:
-                st.write("**Current Data:**")
-                st.dataframe(st.session_state.batch_data, use_container_width=True)
-            
-            # Initialize form counter for clearing
-            if 'form_counter' not in st.session_state:
-                st.session_state.form_counter = 0
-                
-            # Add new entry form with dynamic key to force reset
-            with st.form(f"add_entry_form_{st.session_state.form_counter}"):
-                st.write("**Add New Entry:**")
-                col1, col2, col3 = st.columns([2, 1, 1])
-                
-                with col1:
-                    new_azimuth = st.text_input(
-                        "Azimuth", 
-                        value="",  # Always start empty
-                        placeholder="26 56 7.00 or 26.935",
-                        help="Easy mobile formats: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935"
-                    )
-                
-                with col2:
-                    new_distance = st.number_input(
-                        "Distance", 
-                        value=None,  # Start empty instead of 0
-                        step=0.001, 
-                        format="%.3f"
-                    )
-                
-                with col3:
-                    submitted = st.form_submit_button("➕ Add Entry")
-                    
-                if submitted and new_azimuth and new_distance is not None and new_distance > 0:
-                    new_row = pd.DataFrame({
-                        'Azimuth': [new_azimuth], 
-                        'Distance': [new_distance]
-                    })
-                    st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
-                    
-                    # Increment form counter to create new form and clear inputs
-                    st.session_state.form_counter += 1
-                    
-                    st.success("✅ Entry added!")
-                    st.rerun()
-            
-            # Data management buttons
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("🗑️ Clear All Data"):
-                    st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
-                    st.rerun()
-            with col2:
-                if st.button("📝 Reset to Examples"):
-                    st.session_state.batch_data = pd.DataFrame({
-                        'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
-                        'Distance': [5.178, 1.000, 1.000, 1.000]
-                    })
-                    st.rerun()
-            
-        else:  # Upload CSV
-            uploaded_file = st.file_uploader(
-                "Upload CSV file",
-                type=['csv'],
-                help="CSV should have columns: Azimuth (DMS or decimal), Distance"
-            )
-            
-            if uploaded_file is not None:
-                try:
-                    uploaded_df = pd.read_csv(uploaded_file)
-                    if 'Azimuth' in uploaded_df.columns and 'Distance' in uploaded_df.columns:
-                        st.session_state.batch_data = uploaded_df[['Azimuth', 'Distance']]
-                        st.success("✅ File uploaded successfully!")
-                        st.dataframe(st.session_state.batch_data)
-                    else:
-                        st.error("❌ CSV must contain 'Azimuth' and 'Distance' columns")
-                except Exception as e:
-                    st.error(f"❌ Error reading file: {str(e)}")
+        col_input, col_viz = st.columns([1, 1.4])
         
-        # Process batch conversion
-        if st.button("🔄 Convert All", type="primary"):
-            if not st.session_state.batch_data.empty:
-                results = []
-                errors = []
+        with col_input:
+            if input_method == "Manual Entry":
+                st.subheader("Enter Data")
                 
-                # Start with the initial reference point
-                current_ref_x = ref_x
-                current_ref_y = ref_y
+                if not st.session_state.batch_data.empty:
+                    st.write("**Current Data:**")
+                    st.dataframe(st.session_state.batch_data, use_container_width=True, height=200)
                 
-                st.info("🔄 Processing polygon traversal - each point becomes the reference for the next...")
-                
-                for index, row in st.session_state.batch_data.iterrows():
-                    try:
-                        # Parse azimuth (could be DMS or decimal)
-                        azimuth_raw = row['Azimuth']
-                        if isinstance(azimuth_raw, str):
-                            azimuth = parse_dms_to_decimal(azimuth_raw)
-                            if azimuth is None:
-                                errors.append(f"Row {int(index) + 1}: Invalid azimuth format '{azimuth_raw}'")
-                                continue
-                        else:
-                            azimuth = float(azimuth_raw)
-                        
-                        distance = float(row['Distance'])
-                        
-                        if not validate_azimuth(azimuth):
-                            errors.append(f"Row {int(index) + 1}: Invalid azimuth {azimuth}°")
-                            continue
-                        
-                        # Calculate coordinates using current reference point
-                        x, y = azimuth_to_coordinates(azimuth, distance, current_ref_x, current_ref_y, azimuth_convention)
-                        
-                        results.append({
-                            'Row': int(index) + 1,
-                            'Azimuth_Original': str(azimuth_raw),
-                            'Azimuth_Decimal': float(azimuth),
-                            'Distance': float(distance),
-                            'Reference_X': float(current_ref_x),
-                            'Reference_Y': float(current_ref_y),
-                            'X_Coordinate': float(x),
-                            'Y_Coordinate': float(y)
-                        })
-                        
-                        # CRITICAL: Update reference point for next iteration (polygon traversal)
-                        current_ref_x = x
-                        current_ref_y = y
-                        
-                    except Exception as e:
-                        errors.append(f"Row {int(index) + 1}: {str(e)}")
-                
-                # Display results
-                if results:
-                    results_df = pd.DataFrame(results)
-                    st.success(f"✅ Successfully converted {len(results)} points for polygon traversal")
+                if 'form_counter' not in st.session_state:
+                    st.session_state.form_counter = 0
                     
-                    # Check if polygon closes (last point should equal starting reference)
-                    final_x = results_df.iloc[-1]['X_Coordinate']
-                    final_y = results_df.iloc[-1]['Y_Coordinate']
-                    closure_error_x = abs(final_x - ref_x)
-                    closure_error_y = abs(final_y - ref_y)
-                    closure_error = math.sqrt(closure_error_x**2 + closure_error_y**2)
+                with st.form(f"add_entry_form_{st.session_state.form_counter}"):
+                    st.write("**Add New Entry:**")
+                    col1, col2 = st.columns([2, 1])
                     
-                    if closure_error < 0.01:  # Within 1cm tolerance
-                        st.success(f"🎯 Polygon CLOSES! Closure error: {closure_error:.6f}")
-                    else:
-                        st.error(f"⚠️ Polygon closure error: {closure_error:.6f} (X: {closure_error_x:.3f}, Y: {closure_error_y:.3f})")
-                    
-                    # Calculate polygon area
-                    coordinates = [(ref_x, ref_y)]  # Start with initial reference point
-                    for _, row in results_df.iterrows():
-                        coordinates.append((row['X_Coordinate'], row['Y_Coordinate']))
-                    
-                    polygon_area = calculate_polygon_area(coordinates)
-                    
-                    # Display area calculation
-                    st.subheader("📐 Polygon Area")
-                    col1, col2 = st.columns(2)
                     with col1:
-                        st.metric("Area", f"{polygon_area:.3f} m²", help="Calculated using Shoelace formula")
+                        new_azimuth = st.text_input(
+                            "Azimuth", 
+                            value="",
+                            placeholder="26 56 7.00 or 26.935",
+                            help="Easy mobile formats: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935"
+                        )
+                    
                     with col2:
-                        st.metric("Vertices", f"{len(results)}", help="Number of calculated points")
+                        new_distance = st.number_input(
+                            "Distance", 
+                            value=None,
+                            step=0.001, 
+                            format="%.3f"
+                        )
                     
-                    st.dataframe(results_df, use_container_width=True)
-                    
-                    # Download results
-                    csv_buffer = io.StringIO()
-                    results_df.to_csv(csv_buffer, index=False)
-                    csv_data = csv_buffer.getvalue()
-                    
-                    st.download_button(
-                        label="📥 Download Results as CSV",
-                        data=csv_data,
-                        file_name="azimuth_to_coordinates_results.csv",
-                        mime="text/csv"
-                    )
+                    submitted = st.form_submit_button("➕ Add Entry", use_container_width=True)
+                        
+                    if submitted and new_azimuth and new_distance is not None and new_distance > 0:
+                        new_row = pd.DataFrame({
+                            'Azimuth': [new_azimuth], 
+                            'Distance': [new_distance]
+                        })
+                        st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
+                        st.session_state.form_counter += 1
+                        st.success("✅ Entry added!")
+                        st.rerun()
                 
-                # Display errors if any
-                if errors:
-                    st.error("❌ Errors encountered:")
-                    for error in errors:
-                        st.write(f"- {error}")
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("🗑️ Clear All"):
+                        st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
+                        st.rerun()
+                with col2:
+                    if st.button("📝 Examples"):
+                        st.session_state.batch_data = pd.DataFrame({
+                            'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
+                            'Distance': [5.178, 1.000, 1.000, 1.000]
+                        })
+                        st.rerun()
+                
+            else:  # Upload CSV
+                uploaded_file = st.file_uploader(
+                    "Upload CSV file",
+                    type=['csv'],
+                    help="CSV should have columns: Azimuth (DMS or decimal), Distance"
+                )
+                
+                if uploaded_file is not None:
+                    try:
+                        uploaded_df = pd.read_csv(uploaded_file)
+                        if 'Azimuth' in uploaded_df.columns and 'Distance' in uploaded_df.columns:
+                            st.session_state.batch_data = uploaded_df[['Azimuth', 'Distance']]
+                            st.success("✅ File uploaded successfully!")
+                            st.dataframe(st.session_state.batch_data)
+                        else:
+                            st.error("❌ CSV must contain 'Azimuth' and 'Distance' columns")
+                    except Exception as e:
+                        st.error(f"❌ Error reading file: {str(e)}")
+            
+            # Process button
+            if st.button("🔄 Convert All", type="primary", use_container_width=True):
+                if not st.session_state.batch_data.empty:
+                    results = []
+                    errors = []
+                    
+                    current_ref_x = ref_x
+                    current_ref_y = ref_y
+                    
+                    st.info("🔄 Processing polygon traversal...")
+                    
+                    for index, row in st.session_state.batch_data.iterrows():
+                        try:
+                            azimuth_raw = row['Azimuth']
+                            if isinstance(azimuth_raw, str):
+                                azimuth = parse_dms_to_decimal(azimuth_raw)
+                                if azimuth is None:
+                                    errors.append(f"Row {int(index) + 1}: Invalid azimuth format '{azimuth_raw}'")
+                                    continue
+                            else:
+                                azimuth = float(azimuth_raw)
+                            
+                            distance = float(row['Distance'])
+                            
+                            if not validate_azimuth(azimuth):
+                                errors.append(f"Row {int(index) + 1}: Invalid azimuth {azimuth}°")
+                                continue
+                            
+                            x, y = azimuth_to_coordinates(azimuth, distance, current_ref_x, current_ref_y, azimuth_convention)
+                            
+                            results.append({
+                                'Row': int(index) + 1,
+                                'Azimuth_Original': str(azimuth_raw),
+                                'Azimuth_Decimal': float(azimuth),
+                                'Distance': float(distance),
+                                'Reference_X': float(current_ref_x),
+                                'Reference_Y': float(current_ref_y),
+                                'X_Coordinate': float(x),
+                                'Y_Coordinate': float(y)
+                            })
+                            
+                            current_ref_x = x
+                            current_ref_y = y
+                            
+                        except Exception as e:
+                            errors.append(f"Row {int(index) + 1}: {str(e)}")
+                    
+                    if results:
+                        results_df = pd.DataFrame(results)
+                        st.session_state['results_df'] = results_df
+                        
+                        st.success(f"✅ Successfully converted {len(results)} points")
+                        
+                        # Closure check
+                        final_x = results_df.iloc[-1]['X_Coordinate']
+                        final_y = results_df.iloc[-1]['Y_Coordinate']
+                        closure_error_x = abs(final_x - ref_x)
+                        closure_error_y = abs(final_y - ref_y)
+                        closure_error = math.sqrt(closure_error_x**2 + closure_error_y**2)
+                        
+                        if closure_error < 0.01:
+                            st.success(f"🎯 Polygon CLOSES! Error: {closure_error:.6f}")
+                        else:
+                            st.error(f"⚠️ Closure error: {closure_error:.6f} (X: {closure_error_x:.3f}, Y: {closure_error_y:.3f})")
+                        
+                        # Calculate area
+                        coordinates = [(ref_x, ref_y)]
+                        for _, row in results_df.iterrows():
+                            coordinates.append((row['X_Coordinate'], row['Y_Coordinate']))
+                        
+                        polygon_area = calculate_polygon_area(coordinates)
+                        
+                        st.subheader("📐 Polygon Area")
+                        col1, col2 = st.columns(2)
+                        with col1:
+                            st.metric("Area", f"{polygon_area:.3f} m²")
+                        with col2:
+                            st.metric("Vertices", f"{len(results)}")
+                        
+                        st.dataframe(results_df, use_container_width=True, height=300)
+                        
+                        # Download button
+                        csv_buffer = io.StringIO()
+                        results_df.to_csv(csv_buffer, index=False)
+                        csv_data = csv_buffer.getvalue()
+                        
+                        st.download_button(
+                            label="📥 Download Results as CSV",
+                            data=csv_data,
+                            file_name="azimuth_results.csv",
+                            mime="text/csv",
+                            use_container_width=True
+                        )
+                    
+                    if errors:
+                        st.error("❌ Errors encountered:")
+                        for error in errors:
+                            st.write(f"- {error}")
+                else:
+                    st.warning("⚠️ No data to convert")
+        
+        with col_viz:
+            st.subheader("📈 Polygon Visualization")
+            
+            if 'results_df' in st.session_state and not st.session_state['results_df'].empty:
+                try:
+                    fig, config = create_polygon_plot(st.session_state['results_df'], ref_x, ref_y, lang)
+                    st.plotly_chart(fig, use_container_width=True, config=config)
+                    
+                    with st.expander("ℹ️ How to use the visualization"):
+                        st.markdown("""
+                        **Interactive Controls:**
+                        - 🏠 **Home**: Reset view
+                        - 🔍 **Zoom**: Zoom in/out
+                        - ↔️ **Pan**: Drag to move
+                        - 📷 **Camera**: Download as PNG
+                        - 🖱️ **Scroll**: Zoom with mouse wheel
+                        - 🖐️ **Double click**: Reset zoom
+                        
+                        **Legend:**
+                        - 🟢 **Green Star**: Start/End reference point
+                        - 🔴 **Red Circles**: Calculated vertices
+                        - 🔵 **Blue Line**: Polygon perimeter
+                        - ➡️ **Arrows**: Azimuth direction with angles
+                        """)
+                except Exception as e:
+                    st.error(f"Visualization error: {str(e)}")
             else:
-                st.warning("⚠️ No data to convert")
-    
-    with tab3:
-        st.header(get_text('instructions', lang).replace('ℹ️ ', ''))
-        
-        st.markdown(get_text('instructions_title', lang))
-        
-        st.markdown(get_text('excel_compatibility', lang))
-        st.markdown(get_text('excel_compatibility_text', lang))
-        
-        st.markdown(get_text('mobile_formats', lang))
-        st.markdown(get_text('mobile_formats_text', lang))
-        
-        st.markdown(get_text('single_conversion_help', lang))
-        st.markdown(get_text('single_conversion_steps', lang))
-        
-        st.markdown(get_text('batch_conversion_help', lang))
-        st.markdown(get_text('batch_conversion_steps', lang))
-        
-        st.markdown(get_text('examples_title', lang))
-        st.markdown(get_text('mobile_example', lang))
-        st.markdown("")
-        st.markdown(get_text('decimal_example', lang))
-        
-        st.markdown(get_text('tips_title', lang))
-        st.markdown(get_text('tips_text', lang))
+                st.info("👈 Enter data and click 'Convert All' to see polygon visualization")
+                
+                # Show example visualization
+                st.markdown("**Example: Square Polygon**")
+                example_df = pd.DataFrame({
+                    'Row': [1, 2, 3, 4],
+                    'Azimuth_Decimal': [0, 90, 180, 270],
+                    'Distance': [10, 10, 10, 10],
+                    'Reference_X': [1000, 1000, 1010, 1010],
+                    'Reference_Y': [1000, 1010, 1010, 1000],
+                    'X_Coordinate': [1000, 1010, 1010, 1000],
+                    'Y_Coordinate': [1010, 1010, 1000, 1000]
+                })
+                try:
+                    fig_example, config = create_polygon_plot(example_df, 1000, 1000, lang)
+                    st.plotly_chart(fig_example, use_container_width=True, config=config)
+                except:
+                    pass
 
 if __name__ == "__main__":
     main()
-        
