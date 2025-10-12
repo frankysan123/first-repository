@@ -617,57 +617,87 @@ def main():
             if input_method == "Manual Entry":
                 st.subheader("Enter Data")
                 
+                # Editable data table
                 if not st.session_state.batch_data.empty:
-                    st.write("**Current Data:**")
-                    st.dataframe(st.session_state.batch_data, use_container_width=True, height=200)
+                    st.write("**Current Data (Editable):**")
+                    
+                    # Use data_editor for inline editing
+                    edited_df = st.data_editor(
+                        st.session_state.batch_data,
+                        use_container_width=True,
+                        num_rows="dynamic",  # Allow adding/deleting rows
+                        height=250,
+                        column_config={
+                            "Azimuth": st.column_config.TextColumn(
+                                "Azimuth",
+                                help="Format: 26 56 7.00 or 26.935",
+                                width="medium",
+                                required=True
+                            ),
+                            "Distance": st.column_config.NumberColumn(
+                                "Distance",
+                                help="Distance from reference point",
+                                format="%.3f",
+                                min_value=0.0,
+                                step=0.001,
+                                required=True
+                            ),
+                        },
+                        key="data_editor"
+                    )
+                    
+                    # Update session state only if data changed
+                    if not edited_df.equals(st.session_state.batch_data):
+                        st.session_state.batch_data = edited_df
+                        st.success("✅ Data updated!")
                 
-                if 'form_counter' not in st.session_state:
-                    st.session_state.form_counter = 0
-                    
-                with st.form(f"add_entry_form_{st.session_state.form_counter}"):
-                    st.write("**Add New Entry:**")
-                    col1, col2 = st.columns([2, 1])
-                    
-                    with col1:
-                        new_azimuth = st.text_input(
-                            "Azimuth", 
-                            value="",
-                            placeholder="26 56 7.00 or 26.935",
-                            help="Easy mobile formats: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935"
-                        )
-                    
-                    with col2:
-                        new_distance = st.number_input(
-                            "Distance", 
-                            value=None,
-                            step=0.001, 
-                            format="%.3f"
-                        )
-                    
-                    submitted = st.form_submit_button("➕ Add Entry", use_container_width=True)
-                        
-                    if submitted and new_azimuth and new_distance is not None and new_distance > 0:
-                        new_row = pd.DataFrame({
-                            'Azimuth': [new_azimuth], 
-                            'Distance': [new_distance]
-                        })
-                        st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
-                        st.session_state.form_counter += 1
-                        st.success("✅ Entry added!")
-                        st.rerun()
+                # Quick add form (no rerun needed)
+                st.write("**Quick Add Entry:**")
+                col1, col2, col3 = st.columns([2, 1, 1])
+                
+                with col1:
+                    new_azimuth = st.text_input(
+                        "Azimuth", 
+                        value="",
+                        placeholder="26 56 7.00 or 26.935",
+                        help="Easy mobile formats: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935",
+                        key="quick_azimuth"
+                    )
+                
+                with col2:
+                    new_distance = st.number_input(
+                        "Distance", 
+                        value=0.0,
+                        step=0.001, 
+                        format="%.3f",
+                        key="quick_distance"
+                    )
+                
+                with col3:
+                    if st.button("➕ Add", use_container_width=True, type="primary"):
+                        if new_azimuth and new_distance > 0:
+                            new_row = pd.DataFrame({
+                                'Azimuth': [new_azimuth], 
+                                'Distance': [new_distance]
+                            })
+                            st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
+                            st.success("✅ Added!")
+                            # No st.rerun() - just update state
+                        else:
+                            st.warning("Enter valid values")
+                
+                st.markdown("---")
                 
                 col1, col2 = st.columns(2)
                 with col1:
-                    if st.button("🗑️ Clear All"):
+                    if st.button("🗑️ Clear All", use_container_width=True):
                         st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
-                        st.rerun()
                 with col2:
-                    if st.button("📝 Examples"):
+                    if st.button("📝 Load Examples", use_container_width=True):
                         st.session_state.batch_data = pd.DataFrame({
                             'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
                             'Distance': [5.178, 1.000, 1.000, 1.000]
                         })
-                        st.rerun()
                 
             else:  # Upload CSV
                 uploaded_file = st.file_uploader(
