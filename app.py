@@ -392,9 +392,9 @@ def create_polygon_plot(results_df, ref_x, ref_y, lang='en'):
             arrowsize=1,
             arrowwidth=1.5,
             arrowcolor='rgba(0,100,200,0.5)',
-            text=f"Az: {row['Azimuth_Decimal']:.1f}°",
-            font=dict(size=8, color='darkblue'),
-            bgcolor='rgba(255,255,255,0.7)',
+            text="",# ← sin texto
+            font=dict(size=8, color='0,0,0,0'), # ← invisible
+            bgcolor='rgba(0,0,0,0.0)',# ← invesible
             standoff=5
         )
     
