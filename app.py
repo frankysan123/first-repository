@@ -13,7 +13,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Custom CSS for better UI (AGREGADO: overscroll-behavior para desactivar pull-to-refresh)
+# Custom CSS and JavaScript for better UI and to disable pull-to-refresh
 st.markdown("""
 <style>
     /* Responsive design */
@@ -109,10 +109,27 @@ st.markdown("""
     }
     
     /* NUEVO: Desactivar pull-to-refresh en Android/Chrome para evitar recarga accidental */
-    body {
-        overscroll-behavior: none !important;
+    html, body, .stApp, div#root {
+        overscroll-behavior-y: none !important;
+        touch-action: pan-y !important; /* Permitir solo scroll vertical */
     }
 </style>
+<script>
+    // JavaScript para prevenir pull-to-refresh en Chrome Android
+    document.addEventListener('touchstart', function(e) {
+        // Solo prevenir si el toque comienza cerca de la parte superior
+        if (window.scrollY === 0 && e.touches[0].clientY < 50) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', function(e) {
+        // Prevenir el overscroll si estamos en la parte superior
+        if (window.scrollY === 0 && e.touches[0].clientY < 50) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+</script>
 """, unsafe_allow_html=True)
 
 # Language translations (solo español)
@@ -432,8 +449,9 @@ def main():
         z-index: 999;
     }
     /* NUEVO: Desactivar pull-to-refresh también aquí para redundancia */
-    body {
-        overscroll-behavior: none !important;
+    html, body, .stApp, div#root {
+        overscroll-behavior-y: none !important;
+        touch-action: pan-y !important;
     }
     </style>
     <div class="offline-indicator">📱 Offline Ready</div>
@@ -780,10 +798,4 @@ def main():
         - 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
         - 🔴 **Círculos (A1, A2, ...)**: Puntos del polígono (de azimuts)
         - 🟢 **X Verde**: Punto actual (vista previa)
-        - 🔵 **Línea Azul**: Perímetro del polígono (azimut)
-        - 🟢 **Línea Verde**: Perímetro del polígono (puntos ingresados)
-        - ➡️ **Flechas**: Dirección del polígono (azimut)
-        """)
-
-if __name__ == "__main__":
-    main()
+        - 🔵 
