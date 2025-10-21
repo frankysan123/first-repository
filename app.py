@@ -351,7 +351,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         polygon_area = calculate_polygon_area(coordinates)
     
     # Update layout
-    title_text = (f'Visualización Combinada | Puntos Ingresados: {len(single_points)} '
+    title_text = (f'| Puntos Ingresados: {len(single_points)} '
                   f'| Área Puntos: {single_points_area:.3f} m² '
                   f'| Puntos Polígono Azimut: {len(results_df)} '
                   f'| Área Azimut: {polygon_area:.3f} m²')
