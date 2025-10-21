@@ -13,7 +13,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Custom CSS and JavaScript for better UI and to disable pull-to-refresh
+# Custom CSS for better UI
 st.markdown("""
 <style>
     /* Responsive design */
@@ -108,23 +108,37 @@ st.markdown("""
         margin-top: 50px !important;
     }
     
-    /* NUEVO: Desactivar pull-to-refresh en Android/Chrome para evitar recarga accidental */
+    /* Desactivar pull-to-refresh en Android/Chrome */
     html, body, .stApp, div#root {
         overscroll-behavior-y: none !important;
-        touch-action: pan-y !important; /* Permitir solo scroll vertical */
+        touch-action: pan-y !important;
+    }
+    
+    /* Estilo para el indicador offline */
+    .offline-indicator {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background-color: #28a745;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 12px;
+        z-index: 999;
     }
 </style>
+""", unsafe_allow_html=True)
+
+# JavaScript to prevent pull-to-refresh
+st.markdown("""
 <script>
-    // JavaScript para prevenir pull-to-refresh en Chrome Android
     document.addEventListener('touchstart', function(e) {
-        // Solo prevenir si el toque comienza cerca de la parte superior
         if (window.scrollY === 0 && e.touches[0].clientY < 50) {
             e.preventDefault();
         }
     }, { passive: false });
     
     document.addEventListener('touchmove', function(e) {
-        // Prevenir el overscroll si estamos en la parte superior
         if (window.scrollY === 0 && e.touches[0].clientY < 50) {
             e.preventDefault();
         }
@@ -435,27 +449,8 @@ def main():
         initial_sidebar_state="auto"
     )
     
-    st.markdown("""
-    <style>
-    .offline-indicator {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        background-color: #28a745;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 15px;
-        font-size: 12px;
-        z-index: 999;
-    }
-    /* NUEVO: Desactivar pull-to-refresh también aquí para redundancia */
-    html, body, .stApp, div#root {
-        overscroll-behavior-y: none !important;
-        touch-action: pan-y !important;
-    }
-    </style>
-    <div class="offline-indicator">📱 Offline Ready</div>
-    """, unsafe_allow_html=True)
+    # Indicador offline
+    st.markdown('<div class="offline-indicator">📱 Offline Ready</div>', unsafe_allow_html=True)
     
     # Initialize language
     if 'language' not in st.session_state:
@@ -798,4 +793,10 @@ def main():
         - 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
         - 🔴 **Círculos (A1, A2, ...)**: Puntos del polígono (de azimuts)
         - 🟢 **X Verde**: Punto actual (vista previa)
-        - 🔵 
+        - 🔵 **Línea Azul**: Perímetro del polígono (azimut)
+        - 🟢 **Línea Verde**: Perímetro del polígono (puntos ingresados)
+        - ➡️ **Flechas**: Dirección del polígono (azimut)
+        """)
+
+if __name__ == "__main__":
+    main()
