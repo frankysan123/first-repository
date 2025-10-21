@@ -724,8 +724,11 @@ def main():
         st.subheader(get_text('visualization', lang))
         
         results_df = st.session_state.get('results_df', pd.DataFrame())
-        fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang)
-        st.plotly_chart(fig, use_container_width=True, config=config)
+        try:
+            fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang)
+            st.plotly_chart(fig, use_container_width=True, config=config)
+        except Exception as e:
+            st.error(f"Error de visualización: {str(e)}")
         
         with st.expander("ℹ️ Cómo usar la visualización"):
             st.markdown("""
@@ -745,23 +748,6 @@ def main():
             - 🔵 **Línea Azul**: Perímetro del polígono
             - ➡️ **Flechas**: Dirección del azimut
             """)
-            
-        if results_df.empty:
-            st.markdown("**Ejemplo: Polígono Cuadrado**")
-            example_df = pd.DataFrame({
-                'Row': [1, 2, 3, 4],
-                'Azimuth_Decimal': [0, 90, 180, 270],
-                'Distance': [10, 10, 10, 10],
-                'Reference_X': [1000, 1000, 1010, 1010],
-                'Reference_Y': [1000, 1010, 1010, 1000],
-                'X_Coordinate': [1000, 1010, 1010, 1000],
-                'Y_Coordinate': [1010, 1010, 1000, 1000]
-            })
-            try:
-                fig_example, config = create_multi_point_plot(pd.DataFrame({'X': [], 'Y': []}), example_df, 1000, 1000, 0, 0, lang)
-                st.plotly_chart(fig_example, use_container_width=True, config=config)
-            except:
-                pass
 
 if __name__ == "__main__":
     main()
