@@ -351,7 +351,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         polygon_area = calculate_polygon_area(coordinates)
     
     # Update layout
-    title_text = (f'| Puntos Ingresados: {len(single_points)} '
+    title_text = (f'Visualización Combinada | Puntos Ingresados: {len(single_points)} '
                   f'| Área Puntos: {single_points_area:.3f} m² '
                   f'| Puntos Polígono Azimut: {len(results_df)} '
                   f'| Área Azimut: {polygon_area:.3f} m²')
@@ -360,7 +360,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             'text': title_text,
             'x': 0.5,
             'xanchor': 'center',
-            'font': {'size': 16}
+            'font': {'size': 20}  # Aumentado el tamaño de la fuente del título
         },
         xaxis_title='X (m)',
         yaxis_title='Y (m)',
@@ -373,7 +373,8 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             x=1.02
         ),
         hovermode='closest',
-        height=700,
+        height=1000,  # Aumentado de 700 a 1000 para un gráfico más grande
+        # width=1400,  # Descomentar y ajustar si quieres un ancho fijo
         yaxis=dict(scaleanchor="x", scaleratio=1),
         plot_bgcolor='rgba(240,240,240,0.5)',
         dragmode='pan'
@@ -768,8 +769,9 @@ def main():
             - 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
             - 🔴 **Círculos (A1, A2, ...)**: Puntos del polígono (de azimuts)
             - 🟢 **X Verde**: Punto actual (vista previa)
-            - 🔵 **Línea Azul**: Perímetro del polígono
-            - ➡️ **Flechas**: Dirección del azimut
+            - 🔵 **Línea Azul**: Perímetro del polígono (azimut)
+            - 🟢 **Línea Verde**: Perímetro del polígono (puntos ingresados)
+            - ➡️ **Flechas**: Dirección del polígono (azimut)
             """)
 
 if __name__ == "__main__":
