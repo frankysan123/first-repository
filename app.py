@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -6,9 +7,8 @@ import io
 import re
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import json
 
-# To show a hit counter image in Streamlit, use markdown with unsafe_allow_html=True
+# To show a hit counter image in Streamlit
 st.markdown(
     '<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fpolar2xy.streamlit.app%2F&label=visitas&icon=github&color=%233dd5f3&message=&style=flat&tz=UTC">',
     unsafe_allow_html=True
@@ -69,17 +69,6 @@ st.markdown("""
         box-shadow: 0 3px 12px rgba(0,0,0,0.4) !important;
     }
     
-    /* Click point styling */
-    .click-point {
-        animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
-    }
-    
     @media (max-width: 768px) {
         .modebar {
             top: 45px !important;
@@ -90,55 +79,35 @@ st.markdown("""
             height: 38px !important;
         }
     }
+    
+    /* Estilos para botones de puntos */
+    .point-button {
+        background-color: #28a745 !important;
+        color: white !important;
+        border-color: #28a745 !important;
+        border-radius: 8px !important;
+    }
+    
+    .point-button:hover {
+        background-color: #218838 !important;
+        border-color: #1e7e34 !important;
+    }
+    
+    .clear-points-button {
+        background-color: #dc3545 !important;
+        color: white !important;
+        border-color: #dc3545 !important;
+    }
+    
+    .clear-points-button:hover {
+        background-color: #c82333 !important;
+        border-color: #bd2130 !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Language translations (keeping original translations)
+# Language translations (manteniendo solo español)
 TRANSLATIONS = {
-    'en': {
-        'title': '🧭 Azimuth to Coordinates Converter',
-        'subtitle': 'Convert azimuth and distance measurements to X,Y coordinates using your exact Excel formulas.',
-        'settings': '⚙️ Settings',
-        'language': '🌍 Language',
-        'reference_point': 'Reference Point',
-        'reference_x': 'Reference X',
-        'reference_y': 'Reference Y',
-        'reference_x_help': 'X coordinate of reference point',
-        'reference_y_help': 'Y coordinate of reference point',
-        'single_conversion': '📍 Single Conversion',
-        'batch_conversion': '📊 Batch Conversion',
-        'instructions': 'ℹ️ Instructions',
-        'single_point_conversion': 'Single Point Conversion',
-        'azimuth_input_format': 'Azimuth Input Format',
-        'dms_format': 'DMS (266°56\'7.24")',
-        'decimal_format': 'Decimal (266.935)',
-        'azimuth_easy_input': 'Azimuth (Easy Mobile Input)',
-        'azimuth_placeholder': 'Easy formats: 26 56 7.00 or 26-56-7.00 or 26:56:7.00',
-        'azimuth_help': 'Mobile-friendly formats:\n• Spaces: 26 56 7.00\n• Dashes: 26-56-7.00\n• Colons: 26:56:7.00\n• Traditional: 26°56\'7.00"',
-        'azimuth_decimal': 'Azimuth (decimal degrees)',
-        'azimuth_decimal_help': 'Enter azimuth angle in decimal degrees (0-360)',
-        'distance': 'Distance',
-        'distance_help': 'Enter distance from reference point',
-        'results': '📍 Results',
-        'x_coordinate': 'X Coordinate',
-        'y_coordinate': 'Y Coordinate',
-        'input_summary': 'Input:',
-        'enter_values': '👈 Enter azimuth and distance values to see results',
-        'calculation_error': '❌ Calculation Error:',
-        'parsed_success': '✅ Parsed:',
-        'parse_error': '❌ Could not parse',
-        'try_format': 'Try format like: 45°30\'15" or 120°0\'0\'\'',
-        'azimuth_warning': '⚠️ Azimuth {:.3f}° is outside 0-360° range',
-        'enter_azimuth': '👆 Enter an azimuth value above',
-        'visualization': '📈 Visualization',
-        'click_to_add': '🖱️ Click on the graph to add points',
-        'interactive_mode': 'Interactive Point Addition',
-        'add_point': 'Add Point',
-        'points_added': 'Points Added',
-        'current_points': 'Current Points',
-        'remove_last_point': '🗑️ Remove Last Point',
-        'clear_points': '🗑️ Clear All Points',
-    },
     'es': {
         'title': '🧭 Convertidor de Azimut a Coordenadas',
         'subtitle': 'Convierte medidas de azimut y distancia a coordenadas X,Y usando tus fórmulas exactas de Excel.',
@@ -175,19 +144,12 @@ TRANSLATIONS = {
         'azimuth_warning': '⚠️ Azimut {:.3f}° está fuera del rango 0-360°',
         'enter_azimuth': '👆 Ingresa un valor de azimut arriba',
         'visualization': '📈 Visualización',
-        'click_to_add': '🖱️ Haz clic en el gráfico para agregar puntos',
-        'interactive_mode': 'Adición Interactiva de Puntos',
-        'add_point': 'Agregar Punto',
-        'points_added': 'Puntos Agregados',
-        'current_points': 'Puntos Actuales',
-        'remove_last_point': '🗑️ Eliminar Último Punto',
-        'clear_points': '🗑️ Limpiar Todos los Puntos',
     }
 }
 
-def get_text(key, lang='en'):
+def get_text(key, lang='es'):
     """Get translated text for the given key and language"""
-    return TRANSLATIONS.get(lang, TRANSLATIONS['en']).get(key, key)
+    return TRANSLATIONS['es'].get(key, key)
 
 def calculate_polygon_area(coordinates):
     """Calculate polygon area using the Shoelace formula"""
@@ -244,29 +206,10 @@ def validate_azimuth(azimuth):
     """Validate azimuth value is within 0-360 degrees"""
     return 0 <= azimuth <= 360
 
-def calculate_azimuth_distance(from_point, to_point):
-    """Calculate azimuth and distance between two points"""
-    x1, y1 = from_point
-    x2, y2 = to_point
-    
-    dx = x2 - x1
-    dy = y2 - y1
-    
-    distance = math.sqrt(dx**2 + dy**2)
-    if distance == 0:
-        return 0, 0
-    
-    azimuth_rad = math.atan2(dx, dy)
-    azimuth_deg = math.degrees(azimuth_rad)
-    azimuth_deg = azimuth_deg % 360
-    
-    return round(azimuth_deg, 3), round(distance, 3)
-
-def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='en', interactive=False):
+def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='es'):
     """Create interactive plot for single point conversion"""
     fig = go.Figure()
     
-    # Reference point
     fig.add_trace(go.Scatter(
         x=[ref_x],
         y=[ref_y],
@@ -279,7 +222,6 @@ def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='en', i
         hovertemplate='<b>Reference</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
     ))
     
-    # Calculated point
     fig.add_trace(go.Scatter(
         x=[x],
         y=[y],
@@ -292,7 +234,6 @@ def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='en', i
         hovertemplate='<b>Point</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
     ))
     
-    # Line connecting points
     fig.add_trace(go.Scatter(
         x=[ref_x, x],
         y=[ref_y, y],
@@ -302,7 +243,6 @@ def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='en', i
         hovertemplate=f'<b>Distance: {distance:.3f}</b><extra></extra>'
     ))
     
-    # Add arrow annotation
     fig.add_annotation(
         x=x,
         y=y,
@@ -346,13 +286,6 @@ def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='en', i
     fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
     
-    # Configure for click events if interactive
-    if interactive:
-        fig.update_layout(
-            clickmode='event+select',
-            newselectionmode='single'
-        )
-    
     config = {
         'displayModeBar': True,
         'displaylogo': False,
@@ -367,24 +300,127 @@ def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='en', i
     
     return fig, config
 
-def create_interactive_polygon_plot(points_data, ref_x, ref_y, lang='en', interactive=False):
-    """Create interactive plot for polygon with click-to-add functionality"""
+def create_multi_point_plot(points_data, ref_x, ref_y, lang='es'):
+    """Create interactive plot for multiple points"""
     fig = go.Figure()
     
-    # Extract coordinates
-    if not points_data.empty:
-        all_x = [ref_x] + points_data['X_Coordinate'].tolist()
-        all_y = [ref_y] + points_data['Y_Coordinate'].tolist()
-    else:
-        all_x = [ref_x]
-        all_y = [ref_y]
-    
-    # Reference point (Start point)
     fig.add_trace(go.Scatter(
         x=[ref_x],
         y=[ref_y],
         mode='markers+text',
-        name='Start Point',
+        name='Reference',
+        marker=dict(color='blue', size=16, symbol='circle'),
+        text=['REF'],
+        textposition='bottom center',
+        textfont=dict(size=14, color='blue'),
+        hovertemplate='<b>Reference</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+    ))
+    
+    if not points_data.empty:
+        colors = ['red', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+        
+        for i, (_, row) in enumerate(points_data.iterrows()):
+            color = colors[i % len(colors)]
+            point_name = f'P{i+1}'
+            
+            fig.add_trace(go.Scatter(
+                x=[row['X']],
+                y=[row['Y']],
+                mode='markers+text',
+                name=point_name,
+                marker=dict(color=color, size=12, symbol='diamond'),
+                text=[point_name],
+                textposition='top center',
+                textfont=dict(size=12, color=color),
+                hovertemplate=f'<b>{point_name}</b><br>X: %{{x:.3f}}<br>Y: %{{y:.3f}}<br>Azimuth: {row["Azimuth"]:.2f}°<br>Distance: {row["Distance"]:.3f}<extra></extra>'
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=[ref_x, row['X']],
+                y=[ref_y, row['Y']],
+                mode='lines',
+                name=f'{point_name} Line',
+                line=dict(color=color, width=2, dash='dash'),
+                showlegend=False,
+                hovertemplate=f'<b>{point_name}</b><br>Distance: {row["Distance"]:.3f}<extra></extra>'
+            ))
+            
+            fig.add_annotation(
+                x=row['X'],
+                y=row['Y'],
+                ax=ref_x,
+                ay=ref_y,
+                xref='x',
+                yref='y',
+                axref='x',
+                ayref='y',
+                showarrow=True,
+                arrowhead=2,
+                arrowsize=1,
+                arrowwidth=2,
+                arrowcolor=color
+            )
+    
+    fig.update_layout(
+        title={
+            'text': f'Multiple Points Visualization | Total Points: {len(points_data)}',
+            'x': 0.5,
+            'xanchor': 'center',
+            'font': {'size': 16}
+        },
+        xaxis_title='X (m)',
+        yaxis_title='Y (m)',
+        showlegend=True,
+        legend=dict(
+            orientation="v",
+            yanchor="top",
+            y=1,
+            xanchor="left",
+            x=1.02
+        ),
+        hovermode='closest',
+        height=600,
+        yaxis=dict(scaleanchor="x", scaleratio=1),
+        plot_bgcolor='rgba(240,240,240,0.5)',
+        dragmode='pan'
+    )
+    
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
+    
+    config = {
+        'displayModeBar': True,
+        'displaylogo': False,
+        'modeBarButtonSize': 20,
+        'doubleClick': 'reset',
+        'scrollZoom': True
+    }
+    
+    return fig, config
+
+def create_polygon_plot(results_df, ref_x, ref_y, lang='es'):
+    """Create interactive plot for polygon traversal"""
+    fig = go.Figure()
+    
+    all_x = [ref_x] + results_df['X_Coordinate'].tolist()
+    all_y = [ref_y] + results_df['Y_Coordinate'].tolist()
+    
+    fig.add_trace(go.Scatter(
+        x=all_x + [all_x[0]],
+        y=all_y + [all_y[0]],
+        mode='lines',
+        name='Polygon',
+        line=dict(color='blue', width=3),
+        fill='toself',
+        fillcolor='rgba(31, 119, 180, 0.2)',
+        hoverinfo='skip'
+    ))
+    
+    fig.add_trace(go.Scatter(
+        x=[ref_x],
+        y=[ref_y],
+        mode='markers+text',
+        name='Start/End',
         marker=dict(color='green', size=18, symbol='star'),
         text=['START'],
         textposition='bottom center',
@@ -392,77 +428,59 @@ def create_interactive_polygon_plot(points_data, ref_x, ref_y, lang='en', intera
         hovertemplate='<b>Start Point</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
     ))
     
-    # Added points
-    if not points_data.empty:
-        # Polygon outline if we have enough points
-        if len(points_data) >= 2:
-            fig.add_trace(go.Scatter(
-                x=all_x + [all_x[0]],
-                y=all_y + [all_y[0]],
-                mode='lines',
-                name='Polygon',
-                line=dict(color='blue', width=3),
-                fill='toself',
-                fillcolor='rgba(31, 119, 180, 0.2)',
-                hoverinfo='skip'
-            ))
-        
-        # Individual points
-        labels = [f'P{i+1}' for i in range(len(points_data))]
-        fig.add_trace(go.Scatter(
-            x=points_data['X_Coordinate'],
-            y=points_data['Y_Coordinate'],
-            mode='markers+text',
-            name='Points',
-            marker=dict(color='red', size=12, symbol='circle'),
-            text=labels,
-            textposition='top center',
-            textfont=dict(size=10),
-            hovertemplate='<b>Point %{pointNumber}</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<br>Azimuth: %{customdata[0]:.2f}°<br>Distance: %{customdata[1]:.3f}<extra></extra>',
-            customdata=list(zip(points_data['Azimuth_Decimal'], points_data['Distance']))
-        ))
-        
-        # Connection lines between points
-        for i in range(len(points_data)):
-            start_idx = i
-            end_idx = i + 1
-            if end_idx < len(points_data):
-                start_x = all_x[start_idx]
-                start_y = all_y[start_idx]
-                end_x = all_x[end_idx]
-                end_y = all_y[end_idx]
-                
-                # Calculate azimuth and distance for this segment
-                az, dist = calculate_azimuth_distance((start_x, start_y), (end_x, end_y))
-                
-                fig.add_trace(go.Scatter(
-                    x=[start_x, end_x],
-                    y=[start_y, end_y],
-                    mode='lines',
-                    name=f'Segment {i+1}-{i+2}',
-                    line=dict(color='gray', width=2, dash='dot'),
-                    hovertemplate=f'<b>Segment {i+1}-{i+2}</b><br>Azimuth: {az:.2f}°<br>Distance: {dist:.3f}<extra></extra>',
-                    showlegend=False
-                ))
-        
-        # Calculate and display area
-        coordinates = [(ref_x, ref_y)] + list(zip(points_data['X_Coordinate'], points_data['Y_Coordinate']))
-        area = calculate_polygon_area(coordinates)
-        
-        title_text = f'Interactive Polygon | Points: {len(points_data)} | Area: {area:.3f} m²'
+    if len(results_df) <= 20:
+        labels = [f'P{i+1}' for i in range(len(results_df))]
+        mode = 'markers+text'
     else:
-        title_text = 'Interactive Polygon | Click to Add Points'
+        labels = None
+        mode = 'markers'
     
-    # Configure for click events if interactive
-    if interactive:
-        fig.update_layout(
-            clickmode='event+select',
-            newselectionmode='single'
+    fig.add_trace(go.Scatter(
+        x=results_df['X_Coordinate'],
+        y=results_df['Y_Coordinate'],
+        mode=mode,
+        name='Points',
+        marker=dict(color='red', size=10, symbol='circle'),
+        text=labels,
+        textposition='top center',
+        textfont=dict(size=9),
+        hovertemplate='<b>Point %{pointNumber}</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+    ))
+    
+    for i, row in results_df.iterrows():
+        if i == 0:
+            start_x, start_y = ref_x, ref_y
+        else:
+            start_x = results_df.iloc[i-1]['X_Coordinate']
+            start_y = results_df.iloc[i-1]['Y_Coordinate']
+        
+        fig.add_annotation(
+            x=row['X_Coordinate'],
+            y=row['Y_Coordinate'],
+            ax=start_x,
+            ay=start_y,
+            xref="x",
+            yref="y",
+            axref="x",
+            ayref="y",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=1.5,
+            arrowcolor='rgba(0,100,200,0.5)',
+            text="",
+            font=dict(size=15, color='darkblue'),
+            bgcolor='rgba(0,0,0,0)',
+            borderpad=0,
+            standoff=5
         )
+    
+    coordinates = [(ref_x, ref_y)] + list(zip(results_df['X_Coordinate'], results_df['Y_Coordinate']))
+    area = calculate_polygon_area(coordinates)
     
     fig.update_layout(
         title={
-            'text': title_text,
+            'text': f'Polygon Traversal | Points: {len(results_df)} | Area: {area:.3f} m²',
             'x': 0.5,
             'xanchor': 'center',
             'font': {'size': 16}
@@ -499,7 +517,7 @@ def create_interactive_polygon_plot(points_data, ref_x, ref_y, lang='en', intera
         'scrollZoom': True,
         'toImageButtonOptions': {
             'format': 'png',
-            'filename': 'interactive_polygon_plot',
+            'filename': 'polygon_plot',
             'height': 1000,
             'width': 1400,
             'scale': 2
@@ -516,7 +534,6 @@ def main():
         initial_sidebar_state="auto"
     )
     
-    # Offline indicator
     st.markdown("""
     <style>
     .offline-indicator {
@@ -534,28 +551,24 @@ def main():
     <div class="offline-indicator">📱 Offline Ready</div>
     """, unsafe_allow_html=True)
     
-    # Initialize session state
+    # Initialize language
     if 'language' not in st.session_state:
-        st.session_state.language = 'en'
-    if 'interactive_points' not in st.session_state:
-        st.session_state.interactive_points = pd.DataFrame({
-            'Azimuth_Decimal': [],
+        st.session_state.language = 'es'
+    
+    # Initialize session state for points
+    if 'single_points' not in st.session_state:
+        st.session_state.single_points = pd.DataFrame({
+            'Azimuth': [],
             'Distance': [],
-            'X_Coordinate': [],
-            'Y_Coordinate': []
+            'X': [],
+            'Y': []
         })
     
     # Sidebar
     st.sidebar.header(get_text('settings', st.session_state.language))
     
-    # Language toggle
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        if st.button("🇺🇸 English", use_container_width=True, type="primary" if st.session_state.language == 'en' else "secondary"):
-            st.session_state.language = 'en'
-            st.rerun()
-    with col2:
-    if st.button("🇪🇸 Español", use_container_width=True, type="primary" if st.session_state.language == 'es' else "secondary"):
+    # Language toggle (solo español)
+    if st.sidebar.button("🇪🇸 Español", use_container_width=True, type="primary"):
         st.session_state.language = 'es'
         st.rerun()
     
@@ -577,10 +590,55 @@ def main():
     with tab1:
         st.header(get_text('single_point_conversion', lang))
         
+        # Points management section
+        st.subheader("📍 Points Management")
+        col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
+        
+        with col_btn1:
+            if st.button("➕ Add Point", key="add_point", help="Calculate and add current point to visualization", 
+                        use_container_width=True, type="primary"):
+                if 'current_azimuth' in st.session_state and st.session_state.current_azimuth > 0:
+                    azimuth = st.session_state.current_azimuth
+                    distance = st.session_state.current_distance if 'current_distance' in st.session_state else 0
+                    
+                    try:
+                        x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
+                        
+                        new_point = pd.DataFrame({
+                            'Azimuth': [azimuth],
+                            'Distance': [distance],
+                            'X': [x],
+                            'Y': [y]
+                        })
+                        
+                        st.session_state.single_points = pd.concat([st.session_state.single_points, new_point], ignore_index=True)
+                        st.success(f"✅ Point added! Total points: {len(st.session_state.single_points)}")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"❌ Error adding point: {str(e)}")
+        
+        with col_btn2:
+            if st.button("🗑️ Clear Points", key="clear_points", help="Remove all points from visualization",
+                        use_container_width=True):
+                st.session_state.single_points = pd.DataFrame({
+                    'Azimuth': [], 'Distance': [], 'X': [], 'Y': []
+                })
+                st.success("✅ All points cleared!")
+                st.rerun()
+        
+        with col_btn3:
+            st.info(f"**Current points:** {len(st.session_state.single_points)}")
+            if not st.session_state.single_points.empty:
+                st.metric("Last Point", f"({st.session_state.single_points.iloc[-1]['X']:.3f}, {st.session_state.single_points.iloc[-1]['Y']:.3f})")
+        
+        if not st.session_state.single_points.empty:
+            with st.expander("📋 View All Points", expanded=False):
+                st.dataframe(st.session_state.single_points[['Azimuth', 'Distance', 'X', 'Y']], 
+                           use_container_width=True, height=200)
+        
         col1, col2 = st.columns([1, 1.4])
         
         with col1:
-            # Input method
             input_method = st.radio(
                 get_text('azimuth_input_format', lang),
                 [get_text('dms_format', lang), get_text('decimal_format', lang)],
@@ -592,7 +650,8 @@ def main():
                     get_text('azimuth_easy_input', lang),
                     value="",
                     placeholder=get_text('azimuth_placeholder', lang),
-                    help=get_text('azimuth_help', lang)
+                    help=get_text('azimuth_help', lang),
+                    key="azimuth_input"
                 )
                 
                 if azimuth_input:
@@ -604,9 +663,11 @@ def main():
                         st.success(f"{get_text('parsed_success', lang)} {azimuth_input} → {azimuth:.8f}°")
                         if not validate_azimuth(azimuth):
                             st.warning(get_text('azimuth_warning', lang).format(azimuth))
+                        st.session_state.current_azimuth = azimuth
                 else:
                     azimuth = 0.0
-                    st.info(get_text('enter_azimuth', lang))
+                    if 'current_azimuth' in st.session_state:
+                        del st.session_state.current_azimuth
             else:
                 azimuth = st.number_input(
                     get_text('azimuth_decimal', lang),
@@ -615,8 +676,10 @@ def main():
                     value=0.0,
                     step=0.001,
                     format="%.3f",
-                    help=get_text('azimuth_decimal_help', lang)
+                    help=get_text('azimuth_decimal_help', lang),
+                    key="azimuth_decimal"
                 )
+                st.session_state.current_azimuth = azimuth
             
             distance = st.number_input(
                 get_text('distance', lang),
@@ -624,10 +687,11 @@ def main():
                 value=1.0,
                 step=0.001,
                 format="%.3f",
-                help=get_text('distance_help', lang)
+                help=get_text('distance_help', lang),
+                key="distance_input"
             )
+            st.session_state.current_distance = distance
             
-            # Results
             if azimuth > 0 or distance > 0:
                 try:
                     x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
@@ -652,7 +716,20 @@ def main():
             if azimuth > 0 or distance > 0:
                 try:
                     x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
-                    fig, config = create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang)
+                    
+                    if not st.session_state.single_points.empty:
+                        fig, config = create_multi_point_plot(st.session_state.single_points, ref_x, ref_y, lang)
+                        fig.add_trace(go.Scatter(
+                            x=[x],
+                            y=[y],
+                            mode='markers',
+                            name='Current Point (Preview)',
+                            marker=dict(color='green', size=14, symbol='x'),
+                            hovertemplate='<b>Current Point</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<br>Azimuth: {:.2f}°<br>Distance: {:.3f}<extra></extra>'.format(azimuth, distance)
+                        ))
+                    else:
+                        fig, config = create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang)
+                    
                     st.plotly_chart(fig, use_container_width=True, config=config)
                 except Exception as e:
                     st.error(f"Visualization error: {str(e)}")
@@ -660,148 +737,13 @@ def main():
                 st.info("👈 Enter values to see visualization")
     
     with tab2:
-        st.header("Batch Conversion & Interactive Polygon")
+        st.header("Batch Conversion & Polygon Visualization")
         
-        # Initialize session state for batch data
         if 'batch_data' not in st.session_state:
             st.session_state.batch_data = pd.DataFrame({
                 'Azimuth': [],
                 'Distance': []
             })
-        
-        # Interactive mode toggle
-        col_toggle1, col_toggle2 = st.columns([1, 3])
-        with col_toggle1:
-            interactive_mode = st.toggle(get_text('interactive_mode', lang), value=True)
-        with col_toggle2:
-            if interactive_mode:
-                st.info(get_text('click_to_add', lang))
-        
-        if interactive_mode:
-            st.subheader("🎯 Interactive Point Creation")
-            
-            # Display current interactive points
-            col_points, col_controls = st.columns([2, 1])
-            
-            with col_points:
-                if not st.session_state.interactive_points.empty:
-                    st.write(f"**{get_text('current_points', lang)}:** {len(st.session_state.interactive_points)}")
-                    st.dataframe(st.session_state.interactive_points[['X_Coordinate', 'Y_Coordinate', 'Azimuth_Decimal', 'Distance']], 
-                               use_container_width=True, height=200)
-                else:
-                    st.info(f"👆 {get_text('click_to_add', lang)}")
-            
-            with col_controls:
-                # Point management controls
-                col_btn1, col_btn2 = st.columns(2)
-                with col_btn1:
-                    if st.button(get_text('remove_last_point', lang), type="secondary"):
-                        if not st.session_state.interactive_points.empty:
-                            st.session_state.interactive_points = st.session_state.interactive_points.iloc[:-1].reset_index(drop=True)
-                            st.rerun()
-                
-                with col_btn2:
-                    if st.button(get_text('clear_points', lang), type="secondary"):
-                        st.session_state.interactive_points = pd.DataFrame({
-                            'Azimuth_Decimal': [],
-                            'Distance': [],
-                            'X_Coordinate': [],
-                            'Y_Coordinate': []
-                        })
-                        st.rerun()
-                
-                # Convert to batch data button
-                if st.button("➕ Convert Interactive Points to Batch Data", type="primary"):
-                    if not st.session_state.interactive_points.empty:
-                        # Add interactive points to batch data
-                        batch_points = st.session_state.interactive_points[['Azimuth_Decimal', 'Distance']].copy()
-                        batch_points.columns = ['Azimuth', 'Distance']
-                        st.session_state.batch_data = pd.concat([st.session_state.batch_data, batch_points], ignore_index=True)
-                        st.success(f"✅ Added {len(st.session_state.interactive_points)} points to batch data")
-                        st.rerun()
-            
-            # Interactive visualization
-            col_input_viz, col_graph = st.columns([1, 2])
-            
-            with col_input_viz:
-                st.subheader("📈 Interactive Graph")
-                if not st.session_state.interactive_points.empty:
-                    # Calculate polygon area
-                    coordinates = [(ref_x, ref_y)] + list(zip(
-                        st.session_state.interactive_points['X_Coordinate'], 
-                        st.session_state.interactive_points['Y_Coordinate']
-                    ))
-                    area = calculate_polygon_area(coordinates)
-                    st.metric("📐 Polygon Area", f"{area:.3f} m²")
-                
-                # Show how to use
-                with st.expander("ℹ️ How to Add Points Interactively"):
-                    st.markdown("""
-                    **📱 Click to Add Points:**
-                    1. **Click anywhere** on the graph to add a new point
-                    2. The **azimuth and distance** will be calculated automatically from the previous point
-                    3. **Green star** = Starting reference point
-                    4. **Red circles** = Added points
-                    5. **Blue polygon** = Forms as you add points
-                    6. **Use controls** above to remove or clear points
-                    """)
-            
-            with col_graph:
-                # Create interactive plot
-                try:
-                    fig, config = create_interactive_polygon_plot(
-                        st.session_state.interactive_points, ref_x, ref_y, lang, interactive=True
-                    )
-                    
-                    # Handle click events
-                    plotly_events = st.plotly_chart(
-                        fig, 
-                        use_container_width=True, 
-                        config=config,
-                        key="interactive_plot"
-                    )
-                    
-                    # Process click events
-                    if plotly_events:
-                        for event in plotly_events:
-                            if event['event'] == 'plotly_click':
-                                # Get click coordinates
-                                click_x = event['x']
-                                click_y = event['y']
-                                
-                                # Calculate azimuth and distance from last point
-                                if st.session_state.interactive_points.empty:
-                                    # First point - calculate from reference
-                                    prev_x, prev_y = ref_x, ref_y
-                                else:
-                                    # Calculate from last added point
-                                    last_point = st.session_state.interactive_points.iloc[-1]
-                                    prev_x, prev_y = last_point['X_Coordinate'], last_point['Y_Coordinate']
-                                
-                                azimuth, distance = calculate_azimuth_distance((prev_x, prev_y), (click_x, click_y))
-                                
-                                # Add new point
-                                new_point = pd.DataFrame({
-                                    'Azimuth_Decimal': [azimuth],
-                                    'Distance': [distance],
-                                    'X_Coordinate': [click_x],
-                                    'Y_Coordinate': [click_y]
-                                })
-                                
-                                st.session_state.interactive_points = pd.concat([
-                                    st.session_state.interactive_points, 
-                                    new_point
-                                ], ignore_index=True)
-                                
-                                st.success(f"✅ Added point: Azimuth {azimuth:.2f}°, Distance {distance:.3f}")
-                                st.rerun()
-                
-                except Exception as e:
-                    st.error(f"Visualization error: {str(e)}")
-        
-        # Traditional batch conversion (keeping original functionality)
-        st.markdown("---")
-        st.subheader("📋 Traditional Batch Conversion")
         
         input_method = st.radio(
             "Input Method",
@@ -813,19 +755,15 @@ def main():
         
         with col_input:
             if input_method == "Manual Entry":
-                # Simple approach using form inputs for better control
                 st.subheader("Enter Data")
                 
-                # Display current data
                 if not st.session_state.batch_data.empty:
                     st.write("**Current Data:**")
                     st.dataframe(st.session_state.batch_data, use_container_width=True, height=250)
                 
-                # Initialize form counter for clearing
                 if 'form_counter' not in st.session_state:
                     st.session_state.form_counter = 0
                     
-                # Add new entry form with dynamic key to force reset
                 with st.form(f"add_entry_form_{st.session_state.form_counter}"):
                     st.write("**Add New Entry:**")
                     col1, col2, col3 = st.columns([2, 1, 1])
@@ -833,7 +771,7 @@ def main():
                     with col1:
                         new_azimuth = st.text_input(
                             "Azimuth", 
-                            value="",  # Always start empty
+                            value="",
                             placeholder="26 56 7.00 or 26.935",
                             help="Easy mobile formats: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935"
                         )
@@ -841,7 +779,7 @@ def main():
                     with col2:
                         new_distance = st.number_input(
                             "Distance", 
-                            value=None,  # Start empty instead of 0
+                            value=None,
                             step=0.001, 
                             format="%.3f"
                         )
@@ -855,14 +793,10 @@ def main():
                             'Distance': [new_distance]
                         })
                         st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
-                        
-                        # Increment form counter to create new form and clear inputs
                         st.session_state.form_counter += 1
-                        
                         st.success("✅ Entry added!")
                         st.rerun()
                 
-                # Data management buttons
                 st.markdown("---")
                 col1, col2 = st.columns(2)
                 with col1:
@@ -877,7 +811,7 @@ def main():
                         })
                         st.rerun()
                 
-            else:  # Upload CSV
+            else:
                 uploaded_file = st.file_uploader(
                     "Upload CSV file",
                     type=['csv'],
@@ -896,7 +830,6 @@ def main():
                     except Exception as e:
                         st.error(f"❌ Error reading file: {str(e)}")
             
-            # Process button
             if st.button("🔄 Convert All", type="primary", use_container_width=True):
                 if not st.session_state.batch_data.empty:
                     results = []
@@ -949,7 +882,6 @@ def main():
                         
                         st.success(f"✅ Successfully converted {len(results)} points")
                         
-                        # Closure check
                         final_x = results_df.iloc[-1]['X_Coordinate']
                         final_y = results_df.iloc[-1]['Y_Coordinate']
                         closure_error_x = abs(final_x - ref_x)
@@ -961,7 +893,6 @@ def main():
                         else:
                             st.error(f"⚠️ Closure error: {closure_error:.6f} (X: {closure_error_x:.3f}, Y: {closure_error_y:.3f})")
                         
-                        # Calculate area
                         coordinates = [(ref_x, ref_y)]
                         for _, row in results_df.iterrows():
                             coordinates.append((row['X_Coordinate'], row['Y_Coordinate']))
@@ -977,7 +908,6 @@ def main():
                         
                         st.dataframe(results_df, use_container_width=True, height=300)
                         
-                        # Download button
                         csv_buffer = io.StringIO()
                         results_df.to_csv(csv_buffer, index=False)
                         csv_data = csv_buffer.getvalue()
@@ -1026,7 +956,6 @@ def main():
             else:
                 st.info("👈 Enter data and click 'Convert All' to see polygon visualization")
                 
-                # Show example visualization
                 st.markdown("**Example: Square Polygon**")
                 example_df = pd.DataFrame({
                     'Row': [1, 2, 3, 4],
@@ -1045,3 +974,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
