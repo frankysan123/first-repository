@@ -109,7 +109,7 @@ st.markdown("""
 TRANSLATIONS = {
     'es': {
         'title': '🧭 Convertidor de Azimut a Coordenadas',
-        'subtitle': 'Convierte medidas de azimut y distancia a coordenadas X,Y usando tus fórmulas exactas de Excel.',
+        'subtitle': 'Convierte medidas de azimut y distancia a coordenadas X,Y o ingresa puntos directamente.',
         'settings': '⚙️ Configuración',
         'language': '🌍 Idioma',
         'reference_point': 'Punto de Referencia',
@@ -131,8 +131,12 @@ TRANSLATIONS = {
         'results': '📍 Resultados',
         'x_coordinate': 'Coordenada X',
         'y_coordinate': 'Coordenada Y',
+        'x_input': 'Coordenada X',
+        'y_input': 'Coordenada Y',
+        'x_input_help': 'Ingresa la coordenada X del punto',
+        'y_input_help': 'Ingresa la coordenada Y del punto',
         'input_summary': 'Entrada:',
-        'enter_values': '👈 Ingresa valores de azimut y distancia para ver resultados',
+        'enter_values': '👈 Ingresa valores de coordenadas para ver resultados',
         'calculation_error': '❌ Error de Cálculo:',
         'parsed_success': '✅ Analizado:',
         'parse_error': '❌ No se pudo analizar',
@@ -209,12 +213,12 @@ def create_multi_point_plot(points_data, ref_x, ref_y, lang='es'):
         x=[ref_x],
         y=[ref_y],
         mode='markers+text',
-        name='Reference',
+        name='Referencia',
         marker=dict(color='blue', size=16, symbol='circle'),
         text=['REF'],
         textposition='bottom center',
         textfont=dict(size=14, color='blue'),
-        hovertemplate='<b>Reference</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+        hovertemplate='<b>Referencia</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
     ))
     
     if not points_data.empty:
@@ -233,17 +237,17 @@ def create_multi_point_plot(points_data, ref_x, ref_y, lang='es'):
                 text=[point_name],
                 textposition='top center',
                 textfont=dict(size=12, color=color),
-                hovertemplate=f'<b>{point_name}</b><br>X: %{{x:.3f}}<br>Y: %{{y:.3f}}<br>Azimuth: {row["Azimuth"]:.2f}°<br>Distance: {row["Distance"]:.3f}<extra></extra>'
+                hovertemplate=f'<b>{point_name}</b><br>X: %{{x:.3f}}<br>Y: %{{y:.3f}}<extra></extra>'
             ))
             
             fig.add_trace(go.Scatter(
                 x=[ref_x, row['X']],
                 y=[ref_y, row['Y']],
                 mode='lines',
-                name=f'{point_name} Line',
+                name=f'{point_name} Línea',
                 line=dict(color=color, width=2, dash='dash'),
                 showlegend=False,
-                hovertemplate=f'<b>{point_name}</b><br>Distance: {row["Distance"]:.3f}<extra></extra>'
+                hovertemplate=f'<b>{point_name}</b><br>X: %{{x:.3f}}<br>Y: %{{y:.3f}}<extra></extra>'
             ))
             
             fig.add_annotation(
@@ -459,8 +463,6 @@ def main():
     # Initialize session state for points
     if 'single_points' not in st.session_state:
         st.session_state.single_points = pd.DataFrame({
-            'Azimuth': [],
-            'Distance': [],
             'X': [],
             'Y': []
         })
@@ -502,18 +504,14 @@ def main():
         col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
         
         with col_btn1:
-            if st.button("➕ Agregar Punto", key="add_point", help="Calcular y agregar punto actual a la visualización", 
+            if st.button("➕ Agregar Punto", key="add_point", help="Agregar punto a la visualización", 
                         use_container_width=True, type="primary"):
-                if 'current_azimuth' in st.session_state and st.session_state.current_azimuth > 0:
-                    azimuth = st.session_state.current_azimuth
-                    distance = st.session_state.current_distance if 'current_distance' in st.session_state else 0
+                if 'current_x' in st.session_state and 'current_y' in st.session_state:
+                    x = st.session_state.current_x
+                    y = st.session_state.current_y
                     
                     try:
-                        x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
-                        
                         new_point = pd.DataFrame({
-                            'Azimuth': [azimuth],
-                            'Distance': [distance],
                             'X': [x],
                             'Y': [y]
                         })
@@ -528,7 +526,7 @@ def main():
             if st.button("🗑️ Limpiar Puntos", key="clear_points", help="Eliminar todos los puntos de la visualización",
                         use_container_width=True):
                 st.session_state.single_points = pd.DataFrame({
-                    'Azimuth': [], 'Distance': [], 'X': [], 'Y': []
+                    'X': [], 'Y': []
                 })
                 st.success("✅ ¡Todos los puntos eliminados!")
                 st.rerun()
@@ -540,79 +538,40 @@ def main():
         
         if not st.session_state.single_points.empty:
             with st.expander("📋 Ver Todos los Puntos", expanded=False):
-                st.dataframe(st.session_state.single_points[['Azimuth', 'Distance', 'X', 'Y']], 
+                st.dataframe(st.session_state.single_points[['X', 'Y']], 
                            use_container_width=True, height=200)
         
-        st.subheader("📊 Ingreso de Datos")
+        st.subheader("📊 Ingreso de Coordenadas")
         
-        input_method = st.radio(
-            get_text('azimuth_input_format', lang),
-            [get_text('dms_format', lang), get_text('decimal_format', lang)],
-            horizontal=True
-        )
-        
-        if input_method.startswith(get_text('dms_format', lang)[:3]):
-            azimuth_input = st.text_input(
-                get_text('azimuth_easy_input', lang),
-                value="",
-                placeholder=get_text('azimuth_placeholder', lang),
-                help=get_text('azimuth_help', lang),
-                key="azimuth_input"
-            )
-            
-            if azimuth_input:
-                azimuth = parse_dms_to_decimal(azimuth_input)
-                if azimuth is None:
-                    st.error(f"{get_text('parse_error', lang)} '{azimuth_input}'. {get_text('try_format', lang)}")
-                    azimuth = 0.0
-                else:
-                    st.success(f"{get_text('parsed_success', lang)} {azimuth_input} → {azimuth:.8f}°")
-                    if not validate_azimuth(azimuth):
-                        st.warning(get_text('azimuth_warning', lang).format(azimuth))
-                    st.session_state.current_azimuth = azimuth
-            else:
-                azimuth = 0.0
-                if 'current_azimuth' in st.session_state:
-                    del st.session_state.current_azimuth
-        else:
-            azimuth = st.number_input(
-                get_text('azimuth_decimal', lang),
-                min_value=0.0,
-                max_value=360.0,
-                value=0.0,
-                step=0.001,
-                format="%.3f",
-                help=get_text('azimuth_decimal_help', lang),
-                key="azimuth_decimal"
-            )
-            st.session_state.current_azimuth = azimuth
-        
-        distance = st.number_input(
-            get_text('distance', lang),
-            min_value=0.0,
-            value=1.0,
+        x_coord = st.number_input(
+            get_text('x_input', lang),
+            value=0.0,
             step=0.001,
             format="%.3f",
-            help=get_text('distance_help', lang),
-            key="distance_input"
+            help=get_text('x_input_help', lang),
+            key="x_input"
         )
-        st.session_state.current_distance = distance
+        st.session_state.current_x = x_coord
         
-        if azimuth > 0 or distance > 0:
-            try:
-                x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
-                
-                st.subheader(get_text('results', lang))
-                col_x, col_y = st.columns(2)
-                with col_x:
-                    st.metric(get_text('x_coordinate', lang), f"{x:.3f}")
-                with col_y:
-                    st.metric(get_text('y_coordinate', lang), f"{y:.3f}")
-                
-                st.write(f"**{get_text('input_summary', lang)}** Azimut {azimuth:.3f}°, {get_text('distance', lang)} {distance}, {get_text('reference_point', lang)} ({ref_x}, {ref_y})")
-                    
-            except Exception as e:
-                st.error(f"{get_text('calculation_error', lang)} {str(e)}")
+        y_coord = st.number_input(
+            get_text('y_input', lang),
+            value=0.0,
+            step=0.001,
+            format="%.3f",
+            help=get_text('y_input_help', lang),
+            key="y_input"
+        )
+        st.session_state.current_y = y_coord
+        
+        if x_coord != 0 or y_coord != 0:
+            st.subheader(get_text('results', lang))
+            col_x, col_y = st.columns(2)
+            with col_x:
+                st.metric(get_text('x_coordinate', lang), f"{x_coord:.3f}")
+            with col_y:
+                st.metric(get_text('y_coordinate', lang), f"{y_coord:.3f}")
+            
+            st.write(f"**{get_text('input_summary', lang)}** Coordenadas ({x_coord:.3f}, {y_coord:.3f})")
         else:
             st.info(get_text('enter_values', lang))
         
@@ -801,21 +760,18 @@ def main():
     with col_viz:
         st.subheader(get_text('visualization', lang))
         
-        if not st.session_state.single_points.empty or (azimuth > 0 and distance > 0):
+        if not st.session_state.single_points.empty or (x_coord != 0 or y_coord != 0):
             try:
-                if azimuth > 0 and distance > 0:
-                    x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
-                    fig, config = create_multi_point_plot(st.session_state.single_points, ref_x, ref_y, lang)
+                fig, config = create_multi_point_plot(st.session_state.single_points, ref_x, ref_y, lang)
+                if x_coord != 0 or y_coord != 0:
                     fig.add_trace(go.Scatter(
-                        x=[x],
-                        y=[y],
+                        x=[x_coord],
+                        y=[y_coord],
                         mode='markers',
                         name='Punto Actual (Vista Previa)',
                         marker=dict(color='green', size=14, symbol='x'),
-                        hovertemplate='<b>Punto Actual</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<br>Azimut: {:.2f}°<br>Distancia: {:.3f}<extra></extra>'.format(azimuth, distance)
+                        hovertemplate='<b>Punto Actual</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
                     ))
-                else:
-                    fig, config = create_multi_point_plot(st.session_state.single_points, ref_x, ref_y, lang)
                 
                 st.plotly_chart(fig, use_container_width=True, config=config)
             except Exception as e:
