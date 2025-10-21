@@ -360,7 +360,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             'text': title_text,
             'x': 0.5,
             'xanchor': 'center',
-            'font': {'size': 20}  # Aumentado el tamaño de la fuente del título
+            'font': {'size': 20}
         },
         xaxis_title='X (m)',
         yaxis_title='Y (m)',
@@ -373,8 +373,8 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             x=1.02
         ),
         hovermode='closest',
-        height=700,  # Aumentado de 700 a 1000 para un gráfico más grande
-        width=1800,
+        height=1000,  # Altura aumentada
+        width=1400,   # Ancho fijo especificado
         yaxis=dict(scaleanchor="x", scaleratio=1),
         plot_bgcolor='rgba(240,240,240,0.5)',
         dragmode='pan'
@@ -750,7 +750,7 @@ def main():
         results_df = st.session_state.get('results_df', pd.DataFrame())
         try:
             fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang)
-            st.plotly_chart(fig, use_container_width=True, config=config)
+            st.plotly_chart(fig, use_container_width=False, config=config)  # Cambiado a False para respetar el ancho fijo
         except Exception as e:
             st.error(f"Error de visualización: {str(e)}")
         
