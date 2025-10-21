@@ -13,13 +13,22 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Custom CSS for better UI
+# Custom CSS for better UI and mobile optimization
 st.markdown("""
 <style>
     /* Responsive design */
     @media (max-width: 768px) {
         .main-header {
             font-size: 1.5rem !important;
+        }
+        /* Adjust graph for mobile */
+        .js-plotly-plot .plotly {
+            height: 500px !important; /* Reduce height on mobile */
+            width: 100% !important; /* Full width on mobile */
+        }
+        /* Make columns stack on mobile */
+        .stHorizontalBlock {
+            flex-direction: column !important;
         }
     }
     
@@ -378,8 +387,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             x=1.02
         ),
         hovermode='closest',
-        height=1000,
-        width=1600,
+        height=700,  # Altura ajustada para mobile en CSS
         yaxis=dict(scaleanchor="x", scaleratio=1),
         plot_bgcolor='rgba(240,240,240,0.5)',
         dragmode='pan'
@@ -397,8 +405,8 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         'toImageButtonOptions': {
             'format': 'png',
             'filename': 'combined_plot',
-            'height': 1000,
-            'width': 1600,
+            'height': 700,
+            'width': 1200,
             'scale': 2
         }
     }
@@ -409,7 +417,7 @@ def main():
     st.set_page_config(
         page_title="Azimuth Converter",
         page_icon="🧭",
-        layout="wide",
+        layout="centered",  # Cambiado a centered para mejor experiencia en mobile
         initial_sidebar_state="auto"
     )
     
@@ -752,7 +760,7 @@ def main():
     results_df = st.session_state.get('results_df', pd.DataFrame())
     try:
         fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang)
-        st.plotly_chart(fig, use_container_width=False, config=config)
+        st.plotly_chart(fig, use_container_width=True, config=config)  # Cambiado a True para responsividad en mobile
     except Exception as e:
         st.error(f"Error de visualización: {str(e)}")
     
