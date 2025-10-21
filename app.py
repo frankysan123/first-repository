@@ -373,8 +373,8 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             x=1.02
         ),
         hovermode='closest',
-        height=1000,  # Aumentado de 700 a 1000 para un gráfico más grande
-        width=1400, 
+        height=900,  # Aumentado de 700 a 1000 para un gráfico más grande
+        width=1400, # Aumentado de 700 a 1000 para un gráfico más grande
         yaxis=dict(scaleanchor="x", scaleratio=1),
         plot_bgcolor='rgba(240,240,240,0.5)',
         dragmode='pan'
