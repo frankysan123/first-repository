@@ -102,6 +102,11 @@ st.markdown("""
         background-color: #c82333 !important;
         border-color: #bd2130 !important;
     }
+    
+    /* Mover el gráfico hacia abajo */
+    div[data-testid="stPlotlyChart"] {
+        margin-top: 50px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -374,7 +379,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         ),
         hovermode='closest',
         height=1000,  # Altura aumentada
-        width=1400,   # Ancho fijo especificado
+        width=1600,   # Ancho aumentado
         yaxis=dict(scaleanchor="x", scaleratio=1),
         plot_bgcolor='rgba(240,240,240,0.5)',
         dragmode='pan'
@@ -393,7 +398,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             'format': 'png',
             'filename': 'combined_plot',
             'height': 1000,
-            'width': 1400,
+            'width': 1600,  # Actualizado para coincidir con el nuevo ancho
             'scale': 2
         }
     }
@@ -750,7 +755,7 @@ def main():
         results_df = st.session_state.get('results_df', pd.DataFrame())
         try:
             fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang)
-            st.plotly_chart(fig, use_container_width=False, config=config)  # Cambiado a False para respetar el ancho fijo
+            st.plotly_chart(fig, use_container_width=False, config=config)  # Usar ancho fijo
         except Exception as e:
             st.error(f"Error de visualización: {str(e)}")
         
