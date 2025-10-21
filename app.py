@@ -243,32 +243,6 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
                 textfont=dict(size=12, color=color),
                 hovertemplate=f'<b>{point_name} (Ingresado)</b><br>X: %{{x:.3f}}<br>Y: %{{y:.3f}}<extra></extra>'
             ))
-            
-            fig.add_trace(go.Scatter(
-                x=[ref_x, row['X']],
-                y=[ref_y, row['Y']],
-                mode='lines',
-                name=f'{point_name} Línea',
-                line=dict(color=color, width=2, dash='dash'),
-                showlegend=False,
-                hovertemplate=f'<b>{point_name}</b><br>X: %{{x:.3f}}<br>Y: %{{y:.3f}}<extra></extra>'
-            ))
-            
-            fig.add_annotation(
-                x=row['X'],
-                y=row['Y'],
-                ax=ref_x,
-                ay=ref_y,
-                xref='x',
-                yref='y',
-                axref='x',
-                ayref='y',
-                showarrow=True,
-                arrowhead=2,
-                arrowsize=1,
-                arrowwidth=2,
-                arrowcolor=color
-            )
         
         # Add polygon connecting single points if there are at least 3 points
         if len(single_points) >= 3:
