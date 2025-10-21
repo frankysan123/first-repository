@@ -117,10 +117,7 @@ TRANSLATIONS = {
         'reference_y': 'Referencia Y',
         'reference_x_help': 'Coordenada X del punto de referencia',
         'reference_y_help': 'Coordenada Y del punto de referencia',
-        'single_conversion': '📍 Conversión Individual',
         'batch_conversion': '📊 Conversión por Lotes',
-        'instructions': 'ℹ️ Instrucciones',
-        'single_point_conversion': 'Conversión de Punto Individual',
         'azimuth_input_format': 'Formato de Entrada de Azimut',
         'dms_format': 'GMS (266°56\'7.24")',
         'decimal_format': 'Decimal (266.935)',
@@ -141,7 +138,6 @@ TRANSLATIONS = {
         'parse_error': '❌ No se pudo analizar',
         'try_format': 'Intenta formato como: 45°30\'15" o 120°0\'0\'\'',
         'azimuth_warning': '⚠️ Azimut {:.3f}° está fuera del rango 0-360°',
-        'enter_azimuth': '👆 Ingresa un valor de azimut arriba',
         'visualization': '📈 Visualización',
     }
 }
@@ -204,100 +200,6 @@ def parse_dms_to_decimal(dms_string):
 def validate_azimuth(azimuth):
     """Validate azimuth value is within 0-360 degrees"""
     return 0 <= azimuth <= 360
-
-def create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang='es'):
-    """Create interactive plot for single point conversion"""
-    fig = go.Figure()
-    
-    fig.add_trace(go.Scatter(
-        x=[ref_x],
-        y=[ref_y],
-        mode='markers+text',
-        name='Reference',
-        marker=dict(color='blue', size=16, symbol='circle'),
-        text=['REF'],
-        textposition='bottom center',
-        textfont=dict(size=14, color='blue'),
-        hovertemplate='<b>Reference</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
-    ))
-    
-    fig.add_trace(go.Scatter(
-        x=[x],
-        y=[y],
-        mode='markers+text',
-        name='Target Point',
-        marker=dict(color='red', size=16, symbol='diamond'),
-        text=['P1'],
-        textposition='top center',
-        textfont=dict(size=14, color='red'),
-        hovertemplate='<b>Point</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
-    ))
-    
-    fig.add_trace(go.Scatter(
-        x=[ref_x, x],
-        y=[ref_y, y],
-        mode='lines',
-        name=f'Azimuth {azimuth:.2f}°',
-        line=dict(color='green', width=3, dash='dash'),
-        hovertemplate=f'<b>Distance: {distance:.3f}</b><extra></extra>'
-    ))
-    
-    fig.add_annotation(
-        x=x,
-        y=y,
-        ax=ref_x,
-        ay=ref_y,
-        xref='x',
-        yref='y',
-        axref='x',
-        ayref='y',
-        showarrow=True,
-        arrowhead=2,
-        arrowsize=1.5,
-        arrowwidth=2,
-        arrowcolor='green'
-    )
-    
-    fig.update_layout(
-        title={
-            'text': f'Azimuth Conversion: {azimuth:.2f}° | Distance: {distance:.3f}',
-            'x': 0.5,
-            'xanchor': 'center',
-            'font': {'size': 16}
-        },
-        xaxis_title='X (m)',
-        yaxis_title='Y (m)',
-        showlegend=True,
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=-0.2,
-            xanchor="center",
-            x=0.5
-        ),
-        hovermode='closest',
-        height=600,
-        yaxis=dict(scaleanchor="x", scaleratio=1),
-        plot_bgcolor='rgba(240,240,240,0.5)',
-        dragmode='pan'
-    )
-    
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
-    
-    config = {
-        'displayModeBar': True,
-        'displaylogo': False,
-        'modeBarStyle': {
-            'bgcolor': 'rgba(30, 30, 30, 0.95)',
-            'color': 'white'
-        },
-        'modeBarButtonSize': 20,
-        'doubleClick': 'reset',
-        'scrollZoom': True
-    }
-    
-    return fig, config
 
 def create_multi_point_plot(points_data, ref_x, ref_y, lang='es'):
     """Create interactive plot for multiple points"""
@@ -362,7 +264,7 @@ def create_multi_point_plot(points_data, ref_x, ref_y, lang='es'):
     
     fig.update_layout(
         title={
-            'text': f'Multiple Points Visualization | Total Points: {len(points_data)}',
+            'text': f'Puntos Múltiples | Total Puntos: {len(points_data)}',
             'x': 0.5,
             'xanchor': 'center',
             'font': {'size': 16}
@@ -408,7 +310,7 @@ def create_polygon_plot(results_df, ref_x, ref_y, lang='es'):
         x=all_x + [all_x[0]],
         y=all_y + [all_y[0]],
         mode='lines',
-        name='Polygon',
+        name='Polígono',
         line=dict(color='blue', width=3),
         fill='toself',
         fillcolor='rgba(31, 119, 180, 0.2)',
@@ -419,12 +321,12 @@ def create_polygon_plot(results_df, ref_x, ref_y, lang='es'):
         x=[ref_x],
         y=[ref_y],
         mode='markers+text',
-        name='Start/End',
+        name='Inicio/Fin',
         marker=dict(color='green', size=18, symbol='star'),
-        text=['START'],
+        text=['INICIO'],
         textposition='bottom center',
         textfont=dict(size=12, color='green', family='Arial Black'),
-        hovertemplate='<b>Start Point</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+        hovertemplate='<b>Punto Inicial</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
     ))
     
     if len(results_df) <= 20:
@@ -438,12 +340,12 @@ def create_polygon_plot(results_df, ref_x, ref_y, lang='es'):
         x=results_df['X_Coordinate'],
         y=results_df['Y_Coordinate'],
         mode=mode,
-        name='Points',
+        name='Puntos',
         marker=dict(color='red', size=10, symbol='circle'),
         text=labels,
         textposition='top center',
         textfont=dict(size=9),
-        hovertemplate='<b>Point %{pointNumber}</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
+        hovertemplate='<b>Punto %{pointNumber}</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
     ))
     
     for i, row in results_df.iterrows():
@@ -479,7 +381,7 @@ def create_polygon_plot(results_df, ref_x, ref_y, lang='es'):
     
     fig.update_layout(
         title={
-            'text': f'Polygon Traversal | Points: {len(results_df)} | Area: {area:.3f} m²',
+            'text': f'Recorrido Poligonal | Puntos: {len(results_df)} | Área: {area:.3f} m²',
             'x': 0.5,
             'xanchor': 'center',
             'font': {'size': 16}
@@ -563,6 +465,12 @@ def main():
             'Y': []
         })
     
+    if 'batch_data' not in st.session_state:
+        st.session_state.batch_data = pd.DataFrame({
+            'Azimuth': [],
+            'Distance': []
+        })
+    
     # Sidebar
     st.sidebar.header(get_text('settings', st.session_state.language))
     
@@ -583,18 +491,18 @@ def main():
     ref_x = st.sidebar.number_input(get_text('reference_x', lang), value=1000.0, help=get_text('reference_x_help', lang))
     ref_y = st.sidebar.number_input(get_text('reference_y', lang), value=1000.0, help=get_text('reference_y_help', lang))
     
-    # Tabs
-    tab1, tab2 = st.tabs([get_text('single_conversion', lang), get_text('batch_conversion', lang)])
+    # Batch Conversion Tab
+    st.header(get_text('batch_conversion', lang))
     
-    with tab1:
-        st.header(get_text('single_point_conversion', lang))
-        
+    col_input, col_viz = st.columns([1, 1.4])
+    
+    with col_input:
         # Points management section
-        st.subheader("📍 Points Management")
+        st.subheader("📍 Gestión de Puntos")
         col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
         
         with col_btn1:
-            if st.button("➕ Add Point", key="add_point", help="Calculate and add current point to visualization", 
+            if st.button("➕ Agregar Punto", key="add_point", help="Calcular y agregar punto actual a la visualización", 
                         use_container_width=True, type="primary"):
                 if 'current_azimuth' in st.session_state and st.session_state.current_azimuth > 0:
                     azimuth = st.session_state.current_azimuth
@@ -611,365 +519,351 @@ def main():
                         })
                         
                         st.session_state.single_points = pd.concat([st.session_state.single_points, new_point], ignore_index=True)
-                        st.success(f"✅ Point added! Total points: {len(st.session_state.single_points)}")
+                        st.success(f"✅ ¡Punto agregado! Total puntos: {len(st.session_state.single_points)}")
                         st.rerun()
                     except Exception as e:
-                        st.error(f"❌ Error adding point: {str(e)}")
+                        st.error(f"❌ Error al agregar punto: {str(e)}")
         
         with col_btn2:
-            if st.button("🗑️ Clear Points", key="clear_points", help="Remove all points from visualization",
+            if st.button("🗑️ Limpiar Puntos", key="clear_points", help="Eliminar todos los puntos de la visualización",
                         use_container_width=True):
                 st.session_state.single_points = pd.DataFrame({
                     'Azimuth': [], 'Distance': [], 'X': [], 'Y': []
                 })
-                st.success("✅ All points cleared!")
+                st.success("✅ ¡Todos los puntos eliminados!")
                 st.rerun()
         
         with col_btn3:
-            st.info(f"**Current points:** {len(st.session_state.single_points)}")
+            st.info(f"**Puntos actuales:** {len(st.session_state.single_points)}")
             if not st.session_state.single_points.empty:
-                st.metric("Last Point", f"({st.session_state.single_points.iloc[-1]['X']:.3f}, {st.session_state.single_points.iloc[-1]['Y']:.3f})")
+                st.metric("Último Punto", f"({st.session_state.single_points.iloc[-1]['X']:.3f}, {st.session_state.single_points.iloc[-1]['Y']:.3f})")
         
         if not st.session_state.single_points.empty:
-            with st.expander("📋 View All Points", expanded=False):
+            with st.expander("📋 Ver Todos los Puntos", expanded=False):
                 st.dataframe(st.session_state.single_points[['Azimuth', 'Distance', 'X', 'Y']], 
                            use_container_width=True, height=200)
         
-        col1, col2 = st.columns([1, 1.4])
-        
-        with col1:
-            input_method = st.radio(
-                get_text('azimuth_input_format', lang),
-                [get_text('dms_format', lang), get_text('decimal_format', lang)],
-                horizontal=True
-            )
-            
-            if input_method.startswith(get_text('dms_format', lang)[:3]):
-                azimuth_input = st.text_input(
-                    get_text('azimuth_easy_input', lang),
-                    value="",
-                    placeholder=get_text('azimuth_placeholder', lang),
-                    help=get_text('azimuth_help', lang),
-                    key="azimuth_input"
-                )
-                
-                if azimuth_input:
-                    azimuth = parse_dms_to_decimal(azimuth_input)
-                    if azimuth is None:
-                        st.error(f"{get_text('parse_error', lang)} '{azimuth_input}'. {get_text('try_format', lang)}")
-                        azimuth = 0.0
-                    else:
-                        st.success(f"{get_text('parsed_success', lang)} {azimuth_input} → {azimuth:.8f}°")
-                        if not validate_azimuth(azimuth):
-                            st.warning(get_text('azimuth_warning', lang).format(azimuth))
-                        st.session_state.current_azimuth = azimuth
-                else:
-                    azimuth = 0.0
-                    if 'current_azimuth' in st.session_state:
-                        del st.session_state.current_azimuth
-            else:
-                azimuth = st.number_input(
-                    get_text('azimuth_decimal', lang),
-                    min_value=0.0,
-                    max_value=360.0,
-                    value=0.0,
-                    step=0.001,
-                    format="%.3f",
-                    help=get_text('azimuth_decimal_help', lang),
-                    key="azimuth_decimal"
-                )
-                st.session_state.current_azimuth = azimuth
-            
-            distance = st.number_input(
-                get_text('distance', lang),
-                min_value=0.0,
-                value=1.0,
-                step=0.001,
-                format="%.3f",
-                help=get_text('distance_help', lang),
-                key="distance_input"
-            )
-            st.session_state.current_distance = distance
-            
-            if azimuth > 0 or distance > 0:
-                try:
-                    x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
-                    
-                    st.subheader(get_text('results', lang))
-                    col_x, col_y = st.columns(2)
-                    with col_x:
-                        st.metric(get_text('x_coordinate', lang), f"{x:.3f}")
-                    with col_y:
-                        st.metric(get_text('y_coordinate', lang), f"{y:.3f}")
-                    
-                    st.write(f"**{get_text('input_summary', lang)}** Azimuth {azimuth:.3f}°, {get_text('distance', lang)} {distance}, {get_text('reference_point', lang)} ({ref_x}, {ref_y})")
-                        
-                except Exception as e:
-                    st.error(f"{get_text('calculation_error', lang)} {str(e)}")
-            else:
-                st.info(get_text('enter_values', lang))
-        
-        with col2:
-            st.subheader(get_text('visualization', lang))
-            
-            if azimuth > 0 or distance > 0:
-                try:
-                    x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
-                    
-                    if not st.session_state.single_points.empty:
-                        fig, config = create_multi_point_plot(st.session_state.single_points, ref_x, ref_y, lang)
-                        fig.add_trace(go.Scatter(
-                            x=[x],
-                            y=[y],
-                            mode='markers',
-                            name='Current Point (Preview)',
-                            marker=dict(color='green', size=14, symbol='x'),
-                            hovertemplate='<b>Current Point</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<br>Azimuth: {:.2f}°<br>Distance: {:.3f}<extra></extra>'.format(azimuth, distance)
-                        ))
-                    else:
-                        fig, config = create_single_point_plot(ref_x, ref_y, x, y, azimuth, distance, lang)
-                    
-                    st.plotly_chart(fig, use_container_width=True, config=config)
-                except Exception as e:
-                    st.error(f"Visualization error: {str(e)}")
-            else:
-                st.info("👈 Enter values to see visualization")
-    
-    with tab2:
-        st.header("Batch Conversion & Polygon Visualization")
-        
-        if 'batch_data' not in st.session_state:
-            st.session_state.batch_data = pd.DataFrame({
-                'Azimuth': [],
-                'Distance': []
-            })
+        st.subheader("📊 Ingreso de Datos")
         
         input_method = st.radio(
-            "Input Method",
-            ["Manual Entry", "Upload CSV"],
+            get_text('azimuth_input_format', lang),
+            [get_text('dms_format', lang), get_text('decimal_format', lang)],
             horizontal=True
         )
         
-        col_input, col_viz = st.columns([1, 1.4])
-        
-        with col_input:
-            if input_method == "Manual Entry":
-                st.subheader("Enter Data")
-                
-                if not st.session_state.batch_data.empty:
-                    st.write("**Current Data:**")
-                    st.dataframe(st.session_state.batch_data, use_container_width=True, height=250)
-                
-                if 'form_counter' not in st.session_state:
-                    st.session_state.form_counter = 0
-                    
-                with st.form(f"add_entry_form_{st.session_state.form_counter}"):
-                    st.write("**Add New Entry:**")
-                    col1, col2, col3 = st.columns([2, 1, 1])
-                    
-                    with col1:
-                        new_azimuth = st.text_input(
-                            "Azimuth", 
-                            value="",
-                            placeholder="26 56 7.00 or 26.935",
-                            help="Easy mobile formats: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935"
-                        )
-                    
-                    with col2:
-                        new_distance = st.number_input(
-                            "Distance", 
-                            value=None,
-                            step=0.001, 
-                            format="%.3f"
-                        )
-                    
-                    with col3:
-                        submitted = st.form_submit_button("➕ Add Entry")
-                        
-                    if submitted and new_azimuth and new_distance is not None and new_distance > 0:
-                        new_row = pd.DataFrame({
-                            'Azimuth': [new_azimuth], 
-                            'Distance': [new_distance]
-                        })
-                        st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
-                        st.session_state.form_counter += 1
-                        st.success("✅ Entry added!")
-                        st.rerun()
-                
-                st.markdown("---")
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("🗑️ Clear All Data"):
-                        st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
-                        st.rerun()
-                with col2:
-                    if st.button("📝 Reset to Examples"):
-                        st.session_state.batch_data = pd.DataFrame({
-                            'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
-                            'Distance': [5.178, 1.000, 1.000, 1.000]
-                        })
-                        st.rerun()
-                
-            else:
-                uploaded_file = st.file_uploader(
-                    "Upload CSV file",
-                    type=['csv'],
-                    help="CSV should have columns: Azimuth (DMS or decimal), Distance"
-                )
-                
-                if uploaded_file is not None:
-                    try:
-                        uploaded_df = pd.read_csv(uploaded_file)
-                        if 'Azimuth' in uploaded_df.columns and 'Distance' in uploaded_df.columns:
-                            st.session_state.batch_data = uploaded_df[['Azimuth', 'Distance']]
-                            st.success("✅ File uploaded successfully!")
-                            st.dataframe(st.session_state.batch_data)
-                        else:
-                            st.error("❌ CSV must contain 'Azimuth' and 'Distance' columns")
-                    except Exception as e:
-                        st.error(f"❌ Error reading file: {str(e)}")
+        if input_method.startswith(get_text('dms_format', lang)[:3]):
+            azimuth_input = st.text_input(
+                get_text('azimuth_easy_input', lang),
+                value="",
+                placeholder=get_text('azimuth_placeholder', lang),
+                help=get_text('azimuth_help', lang),
+                key="azimuth_input"
+            )
             
-            if st.button("🔄 Convert All", type="primary", use_container_width=True):
-                if not st.session_state.batch_data.empty:
-                    results = []
-                    errors = []
-                    
-                    current_ref_x = ref_x
-                    current_ref_y = ref_y
-                    
-                    st.info("🔄 Processing polygon traversal...")
-                    
-                    for index, row in st.session_state.batch_data.iterrows():
-                        try:
-                            azimuth_raw = row['Azimuth']
-                            if isinstance(azimuth_raw, str):
-                                azimuth = parse_dms_to_decimal(azimuth_raw)
-                                if azimuth is None:
-                                    errors.append(f"Row {int(index) + 1}: Invalid azimuth format '{azimuth_raw}'")
-                                    continue
-                            else:
-                                azimuth = float(azimuth_raw)
-                            
-                            distance = float(row['Distance'])
-                            
-                            if not validate_azimuth(azimuth):
-                                errors.append(f"Row {int(index) + 1}: Invalid azimuth {azimuth}°")
-                                continue
-                            
-                            x, y = azimuth_to_coordinates(azimuth, distance, current_ref_x, current_ref_y, azimuth_convention)
-                            
-                            results.append({
-                                'Row': int(index) + 1,
-                                'Azimuth_Original': str(azimuth_raw),
-                                'Azimuth_Decimal': float(azimuth),
-                                'Distance': float(distance),
-                                'Reference_X': float(current_ref_x),
-                                'Reference_Y': float(current_ref_y),
-                                'X_Coordinate': float(x),
-                                'Y_Coordinate': float(y)
-                            })
-                            
-                            current_ref_x = x
-                            current_ref_y = y
-                            
-                        except Exception as e:
-                            errors.append(f"Row {int(index) + 1}: {str(e)}")
-                    
-                    if results:
-                        results_df = pd.DataFrame(results)
-                        st.session_state['results_df'] = results_df
-                        
-                        st.success(f"✅ Successfully converted {len(results)} points")
-                        
-                        final_x = results_df.iloc[-1]['X_Coordinate']
-                        final_y = results_df.iloc[-1]['Y_Coordinate']
-                        closure_error_x = abs(final_x - ref_x)
-                        closure_error_y = abs(final_y - ref_y)
-                        closure_error = math.sqrt(closure_error_x**2 + closure_error_y**2)
-                        
-                        if closure_error < 0.01:
-                            st.success(f"🎯 Polygon CLOSES! Error: {closure_error:.6f}")
-                        else:
-                            st.error(f"⚠️ Closure error: {closure_error:.6f} (X: {closure_error_x:.3f}, Y: {closure_error_y:.3f})")
-                        
-                        coordinates = [(ref_x, ref_y)]
-                        for _, row in results_df.iterrows():
-                            coordinates.append((row['X_Coordinate'], row['Y_Coordinate']))
-                        
-                        polygon_area = calculate_polygon_area(coordinates)
-                        
-                        st.subheader("📐 Polygon Area")
-                        col1, col2 = st.columns(2)
-                        with col1:
-                            st.metric("Area", f"{polygon_area:.3f} m²")
-                        with col2:
-                            st.metric("Vertices", f"{len(results)}")
-                        
-                        st.dataframe(results_df, use_container_width=True, height=300)
-                        
-                        csv_buffer = io.StringIO()
-                        results_df.to_csv(csv_buffer, index=False)
-                        csv_data = csv_buffer.getvalue()
-                        
-                        st.download_button(
-                            label="📥 Download Results as CSV",
-                            data=csv_data,
-                            file_name="azimuth_results.csv",
-                            mime="text/csv",
-                            use_container_width=True
-                        )
-                    
-                    if errors:
-                        st.error("❌ Errors encountered:")
-                        for error in errors:
-                            st.write(f"- {error}")
+            if azimuth_input:
+                azimuth = parse_dms_to_decimal(azimuth_input)
+                if azimuth is None:
+                    st.error(f"{get_text('parse_error', lang)} '{azimuth_input}'. {get_text('try_format', lang)}")
+                    azimuth = 0.0
                 else:
-                    st.warning("⚠️ No data to convert")
-        
-        with col_viz:
-            st.subheader("📈 Polygon Visualization")
-            
-            if 'results_df' in st.session_state and not st.session_state['results_df'].empty:
-                try:
-                    fig, config = create_polygon_plot(st.session_state['results_df'], ref_x, ref_y, lang)
-                    st.plotly_chart(fig, use_container_width=True, config=config)
-                    
-                    with st.expander("ℹ️ How to use the visualization"):
-                        st.markdown("""
-                        **Interactive Controls:**
-                        - 🏠 **Home**: Reset view
-                        - 🔍 **Zoom**: Zoom in/out
-                        - ↔️ **Pan**: Drag to move
-                        - 📷 **Camera**: Download as PNG
-                        - 🖱️ **Scroll**: Zoom with mouse wheel
-                        - 🖐️ **Double click**: Reset zoom
-                        
-                        **Legend:**
-                        - 🟢 **Green Star**: Start/End reference point
-                        - 🔴 **Red Circles**: Calculated vertices
-                        - 🔵 **Blue Line**: Polygon perimeter
-                        - ➡️ **Arrows**: Azimuth direction with angles
-                        """)
-                except Exception as e:
-                    st.error(f"Visualization error: {str(e)}")
+                    st.success(f"{get_text('parsed_success', lang)} {azimuth_input} → {azimuth:.8f}°")
+                    if not validate_azimuth(azimuth):
+                        st.warning(get_text('azimuth_warning', lang).format(azimuth))
+                    st.session_state.current_azimuth = azimuth
             else:
-                st.info("👈 Enter data and click 'Convert All' to see polygon visualization")
+                azimuth = 0.0
+                if 'current_azimuth' in st.session_state:
+                    del st.session_state.current_azimuth
+        else:
+            azimuth = st.number_input(
+                get_text('azimuth_decimal', lang),
+                min_value=0.0,
+                max_value=360.0,
+                value=0.0,
+                step=0.001,
+                format="%.3f",
+                help=get_text('azimuth_decimal_help', lang),
+                key="azimuth_decimal"
+            )
+            st.session_state.current_azimuth = azimuth
+        
+        distance = st.number_input(
+            get_text('distance', lang),
+            min_value=0.0,
+            value=1.0,
+            step=0.001,
+            format="%.3f",
+            help=get_text('distance_help', lang),
+            key="distance_input"
+        )
+        st.session_state.current_distance = distance
+        
+        if azimuth > 0 or distance > 0:
+            try:
+                x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
                 
-                st.markdown("**Example: Square Polygon**")
-                example_df = pd.DataFrame({
-                    'Row': [1, 2, 3, 4],
-                    'Azimuth_Decimal': [0, 90, 180, 270],
-                    'Distance': [10, 10, 10, 10],
-                    'Reference_X': [1000, 1000, 1010, 1010],
-                    'Reference_Y': [1000, 1010, 1010, 1000],
-                    'X_Coordinate': [1000, 1010, 1010, 1000],
-                    'Y_Coordinate': [1010, 1010, 1000, 1000]
-                })
+                st.subheader(get_text('results', lang))
+                col_x, col_y = st.columns(2)
+                with col_x:
+                    st.metric(get_text('x_coordinate', lang), f"{x:.3f}")
+                with col_y:
+                    st.metric(get_text('y_coordinate', lang), f"{y:.3f}")
+                
+                st.write(f"**{get_text('input_summary', lang)}** Azimut {azimuth:.3f}°, {get_text('distance', lang)} {distance}, {get_text('reference_point', lang)} ({ref_x}, {ref_y})")
+                    
+            except Exception as e:
+                st.error(f"{get_text('calculation_error', lang)} {str(e)}")
+        else:
+            st.info(get_text('enter_values', lang))
+        
+        st.markdown("---")
+        st.subheader("Carga de Datos por Lotes")
+        
+        input_method_batch = st.radio(
+            "Método de Ingreso",
+            ["Entrada Manual", "Cargar CSV"],
+            horizontal=True
+        )
+        
+        if input_method_batch == "Entrada Manual":
+            st.subheader("Ingresar Datos")
+            
+            if not st.session_state.batch_data.empty:
+                st.write("**Datos Actuales:**")
+                st.dataframe(st.session_state.batch_data, use_container_width=True, height=250)
+            
+            if 'form_counter' not in st.session_state:
+                st.session_state.form_counter = 0
+                
+            with st.form(f"add_entry_form_{st.session_state.form_counter}"):
+                st.write("**Agregar Nueva Entrada:**")
+                col1, col2, col3 = st.columns([2, 1, 1])
+                
+                with col1:
+                    new_azimuth = st.text_input(
+                        "Azimut", 
+                        value="",
+                        placeholder="26 56 7.00 o 26.935",
+                        help="Formatos fáciles: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935"
+                    )
+                
+                with col2:
+                    new_distance = st.number_input(
+                        "Distancia", 
+                        value=None,
+                        step=0.001, 
+                        format="%.3f"
+                    )
+                
+                with col3:
+                    submitted = st.form_submit_button("➕ Agregar Entrada")
+                    
+                if submitted and new_azimuth and new_distance is not None and new_distance > 0:
+                    new_row = pd.DataFrame({
+                        'Azimuth': [new_azimuth], 
+                        'Distance': [new_distance]
+                    })
+                    st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
+                    st.session_state.form_counter += 1
+                    st.success("✅ ¡Entrada agregada!")
+                    st.rerun()
+            
+            st.markdown("---")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("🗑️ Limpiar Todos los Datos"):
+                    st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
+                    st.rerun()
+            with col2:
+                if st.button("📝 Restablecer a Ejemplos"):
+                    st.session_state.batch_data = pd.DataFrame({
+                        'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
+                        'Distance': [5.178, 1.000, 1.000, 1.000]
+                    })
+                    st.rerun()
+            
+        else:
+            uploaded_file = st.file_uploader(
+                "Cargar archivo CSV",
+                type=['csv'],
+                help="El CSV debe tener columnas: Azimuth (GMS o decimal), Distance"
+            )
+            
+            if uploaded_file is not None:
                 try:
-                    fig_example, config = create_polygon_plot(example_df, 1000, 1000, lang)
-                    st.plotly_chart(fig_example, use_container_width=True, config=config)
-                except:
-                    pass
+                    uploaded_df = pd.read_csv(uploaded_file)
+                    if 'Azimuth' in uploaded_df.columns and 'Distance' in uploaded_df.columns:
+                        st.session_state.batch_data = uploaded_df[['Azimuth', 'Distance']]
+                        st.success("✅ ¡Archivo cargado exitosamente!")
+                        st.dataframe(st.session_state.batch_data)
+                    else:
+                        st.error("❌ El CSV debe contener las columnas 'Azimuth' y 'Distance'")
+                except Exception as e:
+                    st.error(f"❌ Error al leer el archivo: {str(e)}")
+        
+        if st.button("🔄 Convertir Todo", type="primary", use_container_width=True):
+            if not st.session_state.batch_data.empty:
+                results = []
+                errors = []
+                
+                current_ref_x = ref_x
+                current_ref_y = ref_y
+                
+                st.info("🔄 Procesando recorrido poligonal...")
+                
+                for index, row in st.session_state.batch_data.iterrows():
+                    try:
+                        azimuth_raw = row['Azimuth']
+                        if isinstance(azimuth_raw, str):
+                            azimuth = parse_dms_to_decimal(azimuth_raw)
+                            if azimuth is None:
+                                errors.append(f"Fila {int(index) + 1}: Formato de azimut inválido '{azimuth_raw}'")
+                                continue
+                        else:
+                            azimuth = float(azimuth_raw)
+                        
+                        distance = float(row['Distance'])
+                        
+                        if not validate_azimuth(azimuth):
+                            errors.append(f"Fila {int(index) + 1}: Azimut inválido {azimuth}°")
+                            continue
+                        
+                        x, y = azimuth_to_coordinates(azimuth, distance, current_ref_x, current_ref_y, azimuth_convention)
+                        
+                        results.append({
+                            'Row': int(index) + 1,
+                            'Azimuth_Original': str(azimuth_raw),
+                            'Azimuth_Decimal': float(azimuth),
+                            'Distance': float(distance),
+                            'Reference_X': float(current_ref_x),
+                            'Reference_Y': float(current_ref_y),
+                            'X_Coordinate': float(x),
+                            'Y_Coordinate': float(y)
+                        })
+                        
+                        current_ref_x = x
+                        current_ref_y = y
+                        
+                    except Exception as e:
+                        errors.append(f"Fila {int(index) + 1}: {str(e)}")
+                
+                if results:
+                    results_df = pd.DataFrame(results)
+                    st.session_state['results_df'] = results_df
+                    
+                    st.success(f"✅ ¡Convertidos {len(results)} puntos exitosamente!")
+                    
+                    final_x = results_df.iloc[-1]['X_Coordinate']
+                    final_y = results_df.iloc[-1]['Y_Coordinate']
+                    closure_error_x = abs(final_x - ref_x)
+                    closure_error_y = abs(final_y - ref_y)
+                    closure_error = math.sqrt(closure_error_x**2 + closure_error_y**2)
+                    
+                    if closure_error < 0.01:
+                        st.success(f"🎯 ¡El polígono CIERRA! Error: {closure_error:.6f}")
+                    else:
+                        st.error(f"⚠️ Error de cierre: {closure_error:.6f} (X: {closure_error_x:.3f}, Y: {closure_error_y:.3f})")
+                    
+                    coordinates = [(ref_x, ref_y)]
+                    for _, row in results_df.iterrows():
+                        coordinates.append((row['X_Coordinate'], row['Y_Coordinate']))
+                    
+                    polygon_area = calculate_polygon_area(coordinates)
+                    
+                    st.subheader("📐 Área del Polígono")
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.metric("Área", f"{polygon_area:.3f} m²")
+                    with col2:
+                        st.metric("Vértices", f"{len(results)}")
+                    
+                    st.dataframe(results_df, use_container_width=True, height=300)
+                    
+                    csv_buffer = io.StringIO()
+                    results_df.to_csv(csv_buffer, index=False)
+                    csv_data = csv_buffer.getvalue()
+                    
+                    st.download_button(
+                        label="📥 Descargar Resultados como CSV",
+                        data=csv_data,
+                        file_name="azimuth_results.csv",
+                        mime="text/csv",
+                        use_container_width=True
+                    )
+                
+                if errors:
+                    st.error("❌ Errores encontrados:")
+                    for error in errors:
+                        st.write(f"- {error}")
+            else:
+                st.warning("⚠️ No hay datos para convertir")
+    
+    with col_viz:
+        st.subheader(get_text('visualization', lang))
+        
+        if not st.session_state.single_points.empty or (azimuth > 0 and distance > 0):
+            try:
+                if azimuth > 0 and distance > 0:
+                    x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
+                    fig, config = create_multi_point_plot(st.session_state.single_points, ref_x, ref_y, lang)
+                    fig.add_trace(go.Scatter(
+                        x=[x],
+                        y=[y],
+                        mode='markers',
+                        name='Punto Actual (Vista Previa)',
+                        marker=dict(color='green', size=14, symbol='x'),
+                        hovertemplate='<b>Punto Actual</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<br>Azimut: {:.2f}°<br>Distancia: {:.3f}<extra></extra>'.format(azimuth, distance)
+                    ))
+                else:
+                    fig, config = create_multi_point_plot(st.session_state.single_points, ref_x, ref_y, lang)
+                
+                st.plotly_chart(fig, use_container_width=True, config=config)
+            except Exception as e:
+                st.error(f"Error de visualización: {str(e)}")
+        
+        st.subheader("📈 Visualización del Polígono")
+        
+        if 'results_df' in st.session_state and not st.session_state['results_df'].empty:
+            try:
+                fig, config = create_polygon_plot(st.session_state['results_df'], ref_x, ref_y, lang)
+                st.plotly_chart(fig, use_container_width=True, config=config)
+                
+                with st.expander("ℹ️ Cómo usar la visualización"):
+                    st.markdown("""
+                    **Controles Interactivos:**
+                    - 🏠 **Inicio**: Restablecer vista
+                    - 🔍 **Zoom**: Acercar/alejar
+                    - ↔️ **Desplazar**: Arrastrar para mover
+                    - 📷 **Cámara**: Descargar como PNG
+                    - 🖱️ **Rueda**: Zoom con la rueda del ratón
+                    - 🖐️ **Doble clic**: Restablecer zoom
+                    
+                    **Leyenda:**
+                    - 🟢 **Estrella Verde**: Punto de inicio/fin
+                    - 🔴 **Círculos Rojos**: Vértices calculados
+                    - 🔵 **Línea Azul**: Perímetro del polígono
+                    - ➡️ **Flechas**: Dirección del azimut
+                    """)
+            except Exception as e:
+                st.error(f"Error de visualización: {str(e)}")
+        else:
+            st.info("👈 Ingresa datos y haz clic en 'Convertir Todo' para ver la visualización del polígono")
+            
+            st.markdown("**Ejemplo: Polígono Cuadrado**")
+            example_df = pd.DataFrame({
+                'Row': [1, 2, 3, 4],
+                'Azimuth_Decimal': [0, 90, 180, 270],
+                'Distance': [10, 10, 10, 10],
+                'Reference_X': [1000, 1000, 1010, 1010],
+                'Reference_Y': [1000, 1010, 1010, 1000],
+                'X_Coordinate': [1000, 1010, 1010, 1000],
+                'Y_Coordinate': [1010, 1010, 1000, 1000]
+            })
+            try:
+                fig_example, config = create_polygon_plot(example_df, 1000, 1000, lang)
+                st.plotly_chart(fig_example, use_container_width=True, config=config)
+            except:
+                pass
 
 if __name__ == "__main__":
     main()
