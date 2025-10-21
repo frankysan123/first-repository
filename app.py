@@ -555,7 +555,7 @@ def main():
             st.session_state.language = 'en'
             st.rerun()
     with col2:
-        if st.button("🇪🇸 Español", use_container_width=True, type="primary" if st.session_state.language == 'es' else "secondary"):
+    if st.button("🇪🇸 Español", use_container_width=True, type="primary" if st.session_state.language == 'es' else "secondary"):
         st.session_state.language = 'es'
         st.rerun()
     
