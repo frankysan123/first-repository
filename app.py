@@ -376,12 +376,12 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         height=800,  # Aumentado de 700 a 1000 para un gráfico más grande
         width=1600, # Aumentado de 700 a 1000 para un gráfico más grande
         yaxis=dict(scaleanchor="x", scaleratio=1),
-        plot_bgcolor='rgba(255, 255, 255,0.5)',
+        plot_bgcolor='rgba(0, 0, 0,0.5)',
         dragmode='pan'
     )
     
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(255,255,255,0.5)')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(255,255,255,0.5)')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.5)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.5)')
     
     config = {
         'displayModeBar': True,
@@ -393,7 +393,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             'format': 'png',
             'filename': 'combined_plot',
             'height': 800,
-            'width': 1600,
+            'width': 2000,
             'scale': 2
         }
     }
