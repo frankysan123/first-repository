@@ -106,7 +106,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Language translations (manteniendo solo español)
+# Language translations (solo español)
 TRANSLATIONS = {
     'es': {
         'title': '🧭 Convertidor de Azimut a Coordenadas',
