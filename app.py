@@ -290,35 +290,6 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
                 hoverinfo='skip'
             ))
             
-            # Add arrows to indicate direction
-            for i in range(len(single_points)):
-                start_x = single_points.iloc[i]['X']
-                start_y = single_points.iloc[i]['Y']
-                next_i = (i + 1) % len(single_points)  # Next point, looping back to 0
-                end_x = single_points.iloc[next_i]['X']
-                end_y = single_points.iloc[next_i]['Y']
-                
-                fig.add_annotation(
-                    x=end_x,
-                    y=end_y,
-                    ax=start_x,
-                    ay=start_y,
-                    xref="x",
-                    yref="y",
-                    axref="x",
-                    ayref="y",
-                    showarrow=True,
-                    arrowhead=2,
-                    arrowsize=1,
-                    arrowwidth=1.5,
-                    arrowcolor='rgba(40, 167, 69, 0.5)',  # Match line color
-                    text="",
-                    font=dict(size=15, color='darkgreen'),
-                    bgcolor='rgba(0,0,0,0)',
-                    borderpad=0,
-                    standoff=5
-                )
-            
             # Calculate area for single points polygon
             coordinates = list(zip(single_points['X'], single_points['Y']))
             single_points_area = calculate_polygon_area(coordinates)
@@ -756,12 +727,26 @@ def main():
                     coordinates = [(ref_x, ref_y)] + list(zip(results_df['X_Coordinate'], results_df['Y_Coordinate']))
                     polygon_area = calculate_polygon_area(coordinates)
                     
-                    st.subheader("📐 Área del Polígono")
+                    st.subheader("📐 Área del Polígono Azimut")
                     col1, col2 = st.columns(2)
                     with col1:
                         st.metric("Área", f"{polygon_area:.3f} m²")
                     with col2:
                         st.metric("Vértices", f"{len(results)}")
+                    
+                    # Comparación de áreas si hay puntos ingresados
+                    if len(st.session_state.single_points) >= 3:
+                        single_coords = list(zip(st.session_state.single_points['X'], st.session_state.single_points['Y']))
+                        single_area = calculate_polygon_area(single_coords)
+                        area_diff = abs(polygon_area - single_area)
+                        st.subheader("📏 Comparación de Áreas")
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            st.metric("Área Azimut", f"{polygon_area:.3f} m²")
+                        with col2:
+                            st.metric("Área Puntos", f"{single_area:.3f} m²")
+                        with col3:
+                            st.metric("Diferencia", f"{area_diff:.3f} m²")
                     
                     st.dataframe(results_df, use_container_width=True, height=300)
                     
