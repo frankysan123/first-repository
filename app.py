@@ -567,87 +567,62 @@ def main():
     st.markdown("---")
     st.subheader("Carga de Datos por Lotes")
    
-    input_method_batch = st.radio(
-        "Método de Ingreso",
-        ["Entrada Manual", "Cargar CSV"],
-        horizontal=True
-    )
+    # Removed the radio and CSV upload, only manual input
+    st.subheader("Ingresar Datos")
    
-    if input_method_batch == "Entrada Manual":
-        st.subheader("Ingresar Datos")
-       
-        if not st.session_state.batch_data.empty:
-            st.write("**Datos Actuales:**")
-            st.dataframe(st.session_state.batch_data, use_container_width=True, height=250)
-       
-        if 'form_counter' not in st.session_state:
-            st.session_state.form_counter = 0
-           
-        with st.form(f"add_entry_form_{st.session_state.form_counter}"):
-            st.write("**Agregar Nueva Entrada:**")
-            col1, col2, col3 = st.columns([2, 1, 1])
-           
-            with col1:
-                new_azimuth = st.text_input(
-                    "Azimut",
-                    value="",
-                    placeholder="26 56 7.00 o 26.935",
-                    help="Formatos fáciles: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935"
-                )
-           
-            with col2:
-                new_distance = st.number_input(
-                    "Distancia",
-                    value=None,
-                    step=0.001,
-                    format="%.3f"
-                )
-           
-            with col3:
-                submitted = st.form_submit_button("➕ Agregar Entrada")
-               
-            if submitted and new_azimuth and new_distance is not None and new_distance > 0:
-                new_row = pd.DataFrame({
-                    'Azimuth': [new_azimuth],
-                    'Distance': [new_distance]
-                })
-                st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
-                st.session_state.form_counter += 1
-                st.success("✅ ¡Entrada agregada!")
-                st.rerun()
-       
-        st.markdown("---")
-        col1, col2 = st.columns(2)
+    if not st.session_state.batch_data.empty:
+        st.write("**Datos Actuales:**")
+        st.dataframe(st.session_state.batch_data, use_container_width=True, height=250)
+   
+    if 'form_counter' not in st.session_state:
+        st.session_state.form_counter = 0
+   
+    with st.form(f"add_entry_form_{st.session_state.form_counter}"):
+        st.write("**Agregar Nueva Entrada:**")
+        col1, col2, col3 = st.columns([2, 1, 1])
+   
         with col1:
-            if st.button("🗑️ Limpiar Todos los Datos"):
-                st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
-                st.rerun()
+            new_azimuth = st.text_input(
+                "Azimut",
+                value="",
+                placeholder="26 56 7.00 o 26.935",
+                help="Formatos fáciles: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935"
+            )
+   
         with col2:
-            if st.button("📝 Restablecer a Ejemplos"):
-                st.session_state.batch_data = pd.DataFrame({
-                    'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
-                    'Distance': [5.178, 1.000, 1.000, 1.000]
-                })
-                st.rerun()
-       
-    else:
-        uploaded_file = st.file_uploader(
-            "Cargar archivo CSV",
-            type=['csv'],
-            help="El CSV debe tener columnas: Azimuth (GMS o decimal), Distance"
-        )
-       
-        if uploaded_file is not None:
-            try:
-                uploaded_df = pd.read_csv(uploaded_file)
-                if 'Azimuth' in uploaded_df.columns and 'Distance' in uploaded_df.columns:
-                    st.session_state.batch_data = uploaded_df[['Azimuth', 'Distance']]
-                    st.success("✅ ¡Archivo cargado exitosamente!")
-                    st.dataframe(st.session_state.batch_data)
-                else:
-                    st.error("❌ El CSV debe contener las columnas 'Azimuth' y 'Distance'")
-            except Exception as e:
-                st.error(f"❌ Error al leer el archivo: {str(e)}")
+            new_distance = st.number_input(
+                "Distancia",
+                value=None,
+                step=0.001,
+                format="%.3f"
+            )
+   
+        with col3:
+            submitted = st.form_submit_button("➕ Agregar Entrada")
+           
+        if submitted and new_azimuth and new_distance is not None and new_distance > 0:
+            new_row = pd.DataFrame({
+                'Azimuth': [new_azimuth],
+                'Distance': [new_distance]
+            })
+            st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
+            st.session_state.form_counter += 1
+            st.success("✅ ¡Entrada agregada!")
+            st.rerun()
+   
+    st.markdown("---")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🗑️ Limpiar Todos los Datos"):
+            st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
+            st.rerun()
+    with col2:
+        if st.button("📝 Restablecer a Ejemplos"):
+            st.session_state.batch_data = pd.DataFrame({
+                'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
+                'Distance': [5.178, 1.000, 1.000, 1.000]
+            })
+            st.rerun()
    
     if st.button("🔄 Convertir Todo", type="primary", use_container_width=True):
         if not st.session_state.batch_data.empty:
