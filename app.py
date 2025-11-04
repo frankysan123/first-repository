@@ -721,10 +721,11 @@ def main():
             with col3:
                 st.metric("Diferencia", f"{area_diff:.3f} m²")
        
-        st.dataframe(results_df, use_container_width=True, height=300)
+        displayed_df = results_df.drop(columns=['Reference_X', 'Reference_Y'])
+        st.dataframe(displayed_df, use_container_width=True, height=300)
        
         csv_buffer = io.StringIO()
-        results_df.to_csv(csv_buffer, index=False)
+        displayed_df.to_csv(csv_buffer, index=False)
         csv_data = csv_buffer.getvalue()
        
         st.download_button(
