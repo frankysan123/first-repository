@@ -675,70 +675,6 @@ def main():
                 st.session_state['results_df'] = results_df
                
                 st.success(f"✅ ¡Convertidos {len(results)} puntos exitosamente!")
-               
-                final_x = results_df.iloc[-1]['X_Coordinate']
-                final_y = results_df.iloc[-1]['Y_Coordinate']
-                closure_error_x = abs(final_x - ref_x)
-                closure_error_y = abs(final_y - ref_y)
-                closure_error = math.sqrt(closure_error_x**2 + closure_error_y**2)
-               
-                if closure_error < 0.01:
-                    st.success(f"🎯 ¡El polígono CIERRA! Error: {closure_error:.6f}")
-                else:
-                    st.error(f"⚠️ Error de cierre: {closure_error:.6f} (X: {closure_error_x:.3f}, Y: {closure_error_y:.3f})")
-               
-                coordinates = [(ref_x, ref_y)] + list(zip(results_df['X_Coordinate'], results_df['Y_Coordinate']))
-                polygon_area = calculate_polygon_area(coordinates)
-               
-                st.subheader("📐 Área del Polígono Azimut")
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.metric("Área", f"{polygon_area:.3f} m²")
-                with col2:
-                    st.metric("Vértices", f"{len(results)}")
-               
-                # Comparación de áreas si hay puntos ingresados
-                if len(st.session_state.single_points) >= 3:
-                    single_coords = list(zip(st.session_state.single_points['X'], st.session_state.single_points['Y']))
-                    single_area = calculate_polygon_area(single_coords)
-                    area_diff = abs(polygon_area - single_area)
-                    st.subheader("📏 Comparación de Áreas")
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Área Azimut", f"{polygon_area:.3f} m²")
-                    with col2:
-                        st.metric("Área Puntos", f"{single_area:.3f} m²")
-                    with col3:
-                        st.metric("Diferencia", f"{area_diff:.3f} m²")
-               
-                st.dataframe(results_df, use_container_width=True, height=300)
-               
-                csv_buffer = io.StringIO()
-                results_df.to_csv(csv_buffer, index=False)
-                csv_data = csv_buffer.getvalue()
-               
-                st.download_button(
-                    label="📥 Descargar Resultados como CSV",
-                    data=csv_data,
-                    file_name="azimuth_results.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
-
-                # Nueva opción para descargar como TXT en formato pt,x,y
-                txt_buffer = io.StringIO()
-                txt_buffer.write("pt,x,y\n")
-                for _, row in results_df.iterrows():
-                    txt_buffer.write(f"{int(row['Row'])},{row['X_Coordinate']:.3f},{row['Y_Coordinate']:.3f}\n")
-                txt_data = txt_buffer.getvalue()
-               
-                st.download_button(
-                    label="📥 Descargar Coordenadas como TXT (pt,x,y)",
-                    data=txt_data,
-                    file_name="coordenadas.txt",
-                    mime="text/plain",
-                    use_container_width=True
-                )
            
             if errors:
                 st.error("❌ Errores encontrados:")
@@ -746,6 +682,72 @@ def main():
                     st.write(f"- {error}")
         else:
             st.warning("⚠️ No hay datos para convertir")
+   
+    # Display persistent results
+    results_df = st.session_state.get('results_df', pd.DataFrame())
+    if not results_df.empty:
+        final_x = results_df.iloc[-1]['X_Coordinate']
+        final_y = results_df.iloc[-1]['Y_Coordinate']
+        closure_error_x = abs(final_x - ref_x)
+        closure_error_y = abs(final_y - ref_y)
+        closure_error = math.sqrt(closure_error_x**2 + closure_error_y**2)
+       
+        if closure_error < 0.01:
+            st.success(f"🎯 ¡El polígono CIERRA! Error: {closure_error:.6f}")
+        else:
+            st.error(f"⚠️ Error de cierre: {closure_error:.6f} (X: {closure_error_x:.3f}, Y: {closure_error_y:.3f})")
+       
+        coordinates = [(ref_x, ref_y)] + list(zip(results_df['X_Coordinate'], results_df['Y_Coordinate']))
+        polygon_area = calculate_polygon_area(coordinates)
+       
+        st.subheader("📐 Área del Polígono Azimut")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Área", f"{polygon_area:.3f} m²")
+        with col2:
+            st.metric("Vértices", f"{len(results_df)}")
+       
+        # Comparación de áreas si hay puntos ingresados
+        if len(st.session_state.single_points) >= 3:
+            single_coords = list(zip(st.session_state.single_points['X'], st.session_state.single_points['Y']))
+            single_area = calculate_polygon_area(single_coords)
+            area_diff = abs(polygon_area - single_area)
+            st.subheader("📏 Comparación de Áreas")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Área Azimut", f"{polygon_area:.3f} m²")
+            with col2:
+                st.metric("Área Puntos", f"{single_area:.3f} m²")
+            with col3:
+                st.metric("Diferencia", f"{area_diff:.3f} m²")
+       
+        st.dataframe(results_df, use_container_width=True, height=300)
+       
+        csv_buffer = io.StringIO()
+        results_df.to_csv(csv_buffer, index=False)
+        csv_data = csv_buffer.getvalue()
+       
+        st.download_button(
+            label="📥 Descargar Resultados como CSV",
+            data=csv_data,
+            file_name="azimuth_results.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
+        txt_buffer = io.StringIO()
+        txt_buffer.write("pt,x,y\n")
+        for _, row in results_df.iterrows():
+            txt_buffer.write(f"{int(row['Row'])},{row['X_Coordinate']:.3f},{row['Y_Coordinate']:.3f}\n")
+        txt_data = txt_buffer.getvalue()
+       
+        st.download_button(
+            label="📥 Descargar Coordenadas como TXT (pt,x,y)",
+            data=txt_data,
+            file_name="coordenadas.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
    
     # Visualization Section (moved below "Convertir Todo")
     st.subheader(get_text('visualization', lang))
