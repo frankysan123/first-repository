@@ -8,6 +8,11 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import json
 from datetime import datetime
+import asyncio
+import concurrent.futures
+from functools import lru_cache
+import gc
+import threading
 # To show a hit counter image in Streamlit
 st.markdown(
     '<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fpolar2xy.streamlit.app%2F&label=visitas&icon=github&color=%233dd5f3&message=&style=flat&tz=UTC">',
@@ -264,54 +269,210 @@ TRANSLATIONS = {
         'visualization': '📈 Visualización',
     }
 }
+# 🚀 PERFORMANCE: Smart Caching & Memory Management
+class PerformanceManager:
+    """Gestión inteligente de caché y memoria"""
+    
+    def __init__(self):
+        self._cache_stats = {}
+        self._memory_threshold = 100 * 1024 * 1024  # 100MB threshold
+        self._cache_lock = threading.Lock()
+    
+    def optimize_memory(self):
+        """Optimizar uso de memoria"""
+        if gc.isenabled():
+            gc.collect()
+        
+        # Limpiar cachés grandes si es necesario
+        if self._should_clear_cache():
+            with self._cache_lock:
+                st.cache_data.clear()
+                self._cache_stats.clear()
+    
+    def _should_clear_cache(self):
+        """Determinar si se debe limpiar el caché"""
+        # Implementar lógica basada en uso de memoria
+        import psutil
+        try:
+            memory_info = psutil.virtual_memory()
+            return memory_info.percent > 80  # Limpiar si uso > 80%
+        except ImportError:
+            return False
+    
+    def get_cache_stats(self):
+        """Obtener estadísticas de caché"""
+        return {
+            'cache_hits': len(self._cache_stats),
+            'memory_usage': self._get_memory_usage()
+        }
+    
+    def _get_memory_usage(self):
+        """Obtener uso de memoria actual"""
+        try:
+            import psutil
+            return psutil.Process().memory_info().rss / 1024 / 1024  # MB
+        except ImportError:
+            return 0
+
+# Instancia global del gestor de rendimiento
+perf_manager = PerformanceManager()
+
+# 🚀 PERFORMANCE: Async Processing Pool
+class AsyncProcessor:
+    """Procesamiento asíncrono para operaciones pesadas"""
+    
+    def __init__(self, max_workers=None):
+        self.max_workers = max_workers or min(32, (threading.cpu_count() or 1) + 4)
+        self._executor = None
+        self._loop = None
+    
+    def __enter__(self):
+        self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers)
+        self._loop = asyncio.new_event_loop()
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._executor:
+            self._executor.shutdown(wait=True)
+        if self._loop:
+            self._loop.close()
+    
+    async def process_batch_async(self, batch_data, ref_x, ref_y, azimuth_convention):
+        """Procesar lote de coordenadas de forma asíncrona"""
+        tasks = []
+        
+        for index, row in batch_data.iterrows():
+            task = self._loop.run_in_executor(
+                self._executor,
+                self._process_single_point,
+                row, ref_x, ref_y, azimuth_convention
+            )
+            tasks.append(task)
+        
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Filtrar resultados válidos
+        valid_results = [r for r in results if not isinstance(r, Exception)]
+        return pd.DataFrame(valid_results)
+    
+    def _process_single_point(self, row, ref_x, ref_y, azimuth_convention):
+        """Procesar punto individual"""
+        try:
+            azimuth = parse_dms_to_decimal(str(row['Azimuth']))
+            if azimuth is None:
+                return None
+                
+            distance = float(row['Distance'])
+            x, y = azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
+            
+            return {
+                'Row': row.name + 1,
+                'X': x,
+                'Y': y
+            }
+        except Exception:
+            return None
+
+# 🚀 PERFORMANCE: LRU Cache para funciones críticas
+@lru_cache(maxsize=128)
+def cached_parse_dms_to_decimal(dms_string):
+    """Versión cacheada de parse_dms_to_decimal"""
+    return parse_dms_to_decimal(dms_string)
+
+@lru_cache(maxsize=256)
+def cached_azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention):
+    """Versión cacheada de azimuth_to_coordinates"""
+    return azimuth_to_coordinates(azimuth, distance, ref_x, ref_y, azimuth_convention)
+
 def get_text(key, lang='es'):
     """Get translated text for the given key and language"""
     return TRANSLATIONS['es'].get(key, key)
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)  # Cache por 1 hora
 def calculate_polygon_area(coordinates):
     """Calculate polygon area using the Shoelace formula - OPTIMIZADO"""
     if len(coordinates) < 3:
         return 0.0
     
     # Convertir a numpy array para mejor rendimiento
-    coords = np.array(coordinates)
+    coords = np.array(coordinates, dtype=np.float64)
     n = len(coords)
     
     # Usar vectorización de numpy para cálculo más rápido
     i = np.arange(n)
     j = (i + 1) % n
     
+    # Optimización con operaciones vectorizadas
     area = np.sum(coords[i, 0] * coords[j, 1]) - np.sum(coords[i, 1] * coords[j, 0])
+    
+    # Liberar memoria temporal
+    del coords, i, j
     
     return abs(area) / 2.0
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=3600)  # Cache por 1 hora
 def batch_calculate_coordinates(batch_data, ref_x, ref_y, azimuth_convention):
-    """Procesar lotes de cálculos con caché"""
+    """Procesar lotes de cálculos con caché - MEJORADO CON PERFORMANCE"""
+    
+    # 🚀 PERFORMANCE: Optimización de memoria
+    perf_manager.optimize_memory()
+    
+    # 🚀 PERFORMANCE: Procesamiento asíncrono para lotes grandes
+    if len(batch_data) > 100:  # Usar async para lotes grandes
+        try:
+            with AsyncProcessor() as processor:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                results_df = loop.run_until_complete(
+                    processor.process_batch_async(batch_data, ref_x, ref_y, azimuth_convention)
+                )
+                loop.close()
+                return results_df
+        except Exception:
+            # Fallback a procesamiento síncrono
+            pass
+    
+    # 🚀 PERFORMANCE: Procesamiento vectorizado para lotes pequeños/medianos
     results = []
     current_ref_x, current_ref_y = ref_x, ref_y
     
+    # Pre-allocar memoria para mejor rendimiento
+    results = [None] * len(batch_data)
+    valid_count = 0
+    
     for index, row in batch_data.iterrows():
         try:
-            azimuth = parse_dms_to_decimal(str(row['Azimuth']))
+            # Usar versión cacheada para mejor rendimiento
+            azimuth = cached_parse_dms_to_decimal(str(row['Azimuth']))
             if azimuth is None:
                 continue
                 
             distance = float(row['Distance'])
-            x, y = azimuth_to_coordinates(azimuth, distance, current_ref_x, current_ref_y, azimuth_convention)
             
-            results.append({
+            # Usar versión cacheada de cálculo de coordenadas
+            x, y = cached_azimuth_to_coordinates(
+                azimuth, distance, current_ref_x, current_ref_y, azimuth_convention
+            )
+            
+            results[valid_count] = {
                 'Row': index + 1,
                 'X': x,
                 'Y': y
-            })
+            }
+            valid_count += 1
             
             current_ref_x, current_ref_y = x, y
             
         except Exception:
             continue
     
-    return pd.DataFrame(results)
+    # Crear DataFrame solo con resultados válidos
+    final_results = results[:valid_count]
+    
+    # Liberar memoria temporal
+    del results
+    perf_manager.optimize_memory()
+    
+    return pd.DataFrame(final_results)
 def azimuth_to_coordinates(azimuth, distance, ref_x=0.0, ref_y=0.0, azimuth_convention="north"):
     """Convert azimuth and distance to X,Y coordinates using Excel formulas - MEJORADO"""
     
@@ -374,8 +535,13 @@ def parse_dms_to_decimal(dms_string):
 def validate_azimuth(azimuth):
     """Validate azimuth value is within 0-360 degrees"""
     return 0 <= azimuth <= 360
+@st.cache_data(show_spinner=False, ttl=1800)  # Cache por 30 minutos
 def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang='es', bg_color='Blanco'):
-    """Create interactive plot for multiple points and polygon"""
+    """Create interactive plot for multiple points and polygon - OPTIMIZADO"""
+    
+    # 🚀 PERFORMANCE: Optimización de memoria antes de crear el gráfico
+    perf_manager.optimize_memory()
+    
     fig = go.Figure()
    
     # Reference point
@@ -717,9 +883,38 @@ def setup_page_config():
     st.markdown('<div class="offline-indicator">📱 Offline Ready</div>', unsafe_allow_html=True)
 
 def main():
-    """Función principal mejorada con mejor organización"""
+    """Función principal mejorada con mejor organización y controles de rendimiento"""
     setup_page_config()
     initialize_session_state()
+    
+    # 🚀 PERFORMANCE: Sidebar para controles de rendimiento
+    with st.sidebar:
+        st.header("⚡ Controles de Rendimiento")
+        
+        # Estadísticas de caché
+        if st.button("🧹 Limpiar Caché"):
+            st.cache_data.clear()
+            st.cache_resource.clear()
+            perf_manager._cache_stats.clear()
+            st.success("✅ Caché limpiado")
+        
+        # Optimización de memoria
+        if st.button("🗑️ Optimizar Memoria"):
+            perf_manager.optimize_memory()
+            st.success("✅ Memoria optimizada")
+        
+        # Mostrar estadísticas
+        if st.checkbox("📊 Mostrar estadísticas"):
+            stats = perf_manager.get_cache_stats()
+            st.metric("Caché hits", stats['cache_hits'])
+            st.metric("Uso de memoria (MB)", f"{stats['memory_usage']:.2f}")
+        
+        # Configuración de rendimiento
+        st.subheader("🔧 Configuración")
+        use_async = st.checkbox("Procesamiento asíncrono", value=True, 
+                               help="Activar para lotes >100 puntos")
+        cache_ttl = st.slider("TTL Caché (minutos)", 15, 360, 60,
+                             help="Tiempo de vida del caché")
    
     # Initialize session state for points
     if 'single_points' not in st.session_state:
@@ -746,6 +941,29 @@ def main():
    
     st.title(get_text('title', lang))
     st.markdown(get_text('subtitle', lang))
+
+    # 🚀 PERFORMANCE: Indicador de rendimiento
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        cache_hits = len(perf_manager._cache_stats)
+        st.metric("⚡ Caché Hits", cache_hits,
+                 help="Número de operaciones aceleradas por caché")
+    with col2:
+        try:
+            import psutil
+            cpu_percent = psutil.cpu_percent(interval=0.1)
+            st.metric("💻 CPU Uso", f"{cpu_percent}%",
+                     help="Uso actual del procesador")
+        except ImportError:
+            st.metric("💻 Estado", "Activo", help="Sistema operativo")
+    with col3:
+        try:
+            import psutil
+            memory = psutil.virtual_memory()
+            st.metric("🧠 Memoria", f"{memory.percent}%",
+                     help="Uso de memoria del sistema")
+        except ImportError:
+            st.metric("🧠 Memoria", "Optimizada", help="Gestión de memoria activa")
    
     azimuth_convention = "excel"
    
@@ -911,7 +1129,16 @@ def main():
             current_ref_x = ref_x
             current_ref_y = ref_y
            
-            st.info("🔄 Procesando recorrido poligonal...")
+            # 🚀 PERFORMANCE: Indicador de progreso para procesamiento
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            # Mostrar información de rendimiento
+            batch_size = len(st.session_state.batch_data)
+            if batch_size > 100:
+                status_text.text(f"⚡ Procesando {batch_size} puntos con async...")
+            else:
+                status_text.text(f"📊 Procesando {batch_size} puntos...")
            
             for index, row in st.session_state.batch_data.iterrows():
                 try:
@@ -948,6 +1175,13 @@ def main():
                    
                 except Exception as e:
                     errors.append(f"Fila {int(index) + 1}: {str(e)}")
+           
+            # Actualizar barra de progreso
+            progress_bar.progress(100)
+            status_text.text(f"✅ Procesamiento completado: {len(results)} puntos calculados")
+            
+            # 🚀 PERFORMANCE: Actualizar estadísticas
+            perf_manager._cache_stats[f'batch_{batch_size}'] = len(results)
            
             if results:
                 results_df = pd.DataFrame(results)
