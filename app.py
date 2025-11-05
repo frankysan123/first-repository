@@ -1054,49 +1054,50 @@ def save_data_to_local_storage():
 def load_data_from_local_storage():
     """Cargar datos desde el almacenamiento local del navegador"""
     try:
-        # Mostrar JavaScript para cargar datos
-        st.components.v1.html("""
+        # Ejecutar JavaScript y CAPTURAR el valor retornado vía setComponentValue
+        data = st.components.v1.html("""
         <script>
-            // Intentar cargar datos guardados
-            const savedData = localStorage.getItem('azimuthAppData');
-            if (savedData) {
-                try {
-                    const data = JSON.parse(savedData);
-                    
-                    // Enviar datos a Streamlit mediante un evento personalizado
-                    window.parent.postMessage({
-                        type: 'azimuthDataLoaded',
-                        data: data
-                    }, '*');
-                    
-                    // Mostrar confirmación
-                    console.log('Datos de azimut cargados exitosamente');
-                } catch (e) {
-                    console.error('Error al parsear datos guardados:', e);
-                }
-            } else {
-                console.log('No se encontraron datos guardados');
+            try {
+                const savedData = localStorage.getItem('azimuthAppData');
+                const value = savedData ? JSON.parse(savedData) : null;
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: value
+                }, '*');
+            } catch (e) {
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: null
+                }, '*');
+                console.error('Error al cargar datos guardados:', e);
             }
         </script>
         """, height=0)
-        
-        # Intentar cargar datos desde el almacenamiento de sesión temporal
-        if 'loaded_azimuth_data' in st.session_state:
-            data = st.session_state.loaded_azimuth_data
-            
+
+        # Si recibimos datos desde el componente, actualizamos el estado
+        if data:
+            st.session_state.loaded_azimuth_data = data
+
             # Actualizar DataFrames con datos cargados
             if 'batch_data' in data and data['batch_data']:
                 st.session_state.batch_data = pd.DataFrame(data['batch_data'])
-            
+            else:
+                st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
+
             if 'single_points' in data and data['single_points']:
                 st.session_state.single_points = pd.DataFrame(data['single_points'])
-            
-            if 'reference_point' in data:
-                st.session_state.ref_x = data['reference_point']['x']
-                st.session_state.ref_y = data['reference_point']['y']
-            
+            else:
+                st.session_state.single_points = pd.DataFrame({'X': [], 'Y': []})
+
+            if 'reference_point' in data and data['reference_point']:
+                st.session_state.ref_x = data['reference_point'].get('x', st.session_state.get('ref_x', 1000.0))
+                st.session_state.ref_y = data['reference_point'].get('y', st.session_state.get('ref_y', 1000.0))
+
+            st.session_state.data_loaded = True
+            st.success("📂 Datos cargados desde almacenamiento local")
             return True
-        
+
+        st.info("📭 No se encontraron datos guardados")
         return False
     except Exception as e:
         st.error(f"Error al cargar datos: {str(e)}")
