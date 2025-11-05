@@ -347,6 +347,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
        
         # Polygon points
         marker_color = 'red' if bg_color == 'Blanco' else 'lightcoral'
+        text_color = 'black' if bg_color == 'Blanco' else 'white'
         if len(results_df) <= 20:
             labels = [f'A{i+1}' for i in range(len(results_df))]
             mode = 'markers+text'
@@ -362,7 +363,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             marker=dict(color=marker_color, size=10, symbol='circle'),
             text=labels,
             textposition='top center',
-            textfont=dict(size=9, color=font_color),
+            textfont=dict(size=9, color=text_color),
             hovertemplate='<b>Punto A%{pointNumber}</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
         ))
        
