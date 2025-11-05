@@ -1163,7 +1163,7 @@ def save_data_to_local_storage():
         
         # Mostrar confirmación breve en modo offline
         if not hasattr(st.session_state, 'save_notification_shown') or not st.session_state.save_notification_shown:
-            st.toast("💾 Datos guardados localmente", duration=2)
+            show_toast("💾 Datos guardados localmente", "success", 2000)
             st.session_state.save_notification_shown = True
         
     except Exception as e:
@@ -1207,7 +1207,7 @@ def load_data_from_local_storage():
                         st.session_state.ref_y = parsed['reference_point'].get('y', st.session_state.get('ref_y', 1000.0))
 
                     st.session_state.data_loaded = True
-                    st.toast("📂 Datos cargados desde memoria", duration=2)
+                    show_toast("📂 Datos cargados desde memoria", "info", 2000)
                     return True
             except Exception:
                 pass  # Continuar con localStorage
@@ -1280,7 +1280,7 @@ def load_data_from_local_storage():
                 st.session_state.ref_y = parsed['reference_point'].get('y', st.session_state.get('ref_y', 1000.0))
 
             st.session_state.data_loaded = True
-            st.toast("📂 Datos cargados desde almacenamiento local", duration=2)
+            show_toast("📂 Datos cargados desde almacenamiento local", "info", 2000)
             return True
 
         # Si no hay datos
