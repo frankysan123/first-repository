@@ -1211,38 +1211,9 @@ def main():
             'auto_save_active': st.session_state.get('auto_save_enabled', True)
         }
     
-    # Verificar si hay datos guardados en localStorage
-    components.html("""
-    <script>
-        // Verificar si hay datos guardados
-        const hasData = localStorage.getItem('azimuthAppData') !== null;
-        
-        // Enviar estado a Streamlit
-        window.parent.postMessage({
-            type: 'dataPersistenceStatus',
-            hasSavedData: hasData
-        }, '*');
-    </script>
-    """, height=0)
-    
     # 📡 MESSAGE HANDLER: Recibir datos de JavaScript
     if 'message_handler_setup' not in st.session_state:
         st.session_state.message_handler_setup = True
-        components.html("""
-        <script>
-            // Escuchar mensajes de JavaScript
-            window.addEventListener('message', function(event) {
-                if (event.data && event.data.type === 'azimuthDataLoaded') {
-                    console.log('Datos recibidos desde JavaScript:', event.data.data);
-                    // Enviar datos a Streamlit mediante postMessage
-                    window.parent.postMessage({
-                        type: 'streamlit:setComponentValue',
-                        value: event.data.data
-                    }, '*');
-                }
-            });
-        </script>
-        """, height=0)
     
     # 🚀 PERFORMANCE: Sidebar para controles de rendimiento
     with st.sidebar:
@@ -1278,25 +1249,10 @@ def main():
                 st.error("🔴 Auto-guardado apagado")
         with col_status2:
             # Verificar si hay datos guardados
-            has_saved_data = False
-            try:
-                components.html("""
-                <script>
-                    const hasData = localStorage.getItem('azimuthAppData') !== null;
-                    window.parent.postMessage({
-                        type: 'hasSavedDataCheck',
-                        hasData: hasData
-                    }, '*');
-                </script>
-                """, height=0)
-                
-                # Simplemente mostrar estado basado en session_state
-                if 'saved_data' in st.session_state:
-                    st.info("💾 Datos guardados")
-                else:
-                    st.warning("📭 Sin datos guardados")
-            except:
-                st.warning("📭 Estado desconocido")
+            if 'saved_data' in st.session_state:
+                st.info("💾 Datos guardados")
+            else:
+                st.warning("📭 Sin datos guardados")
         
         # Auto-save indicator
         auto_save = st.checkbox("Auto-guardar datos", value=st.session_state.get('auto_save_enabled', True), 
