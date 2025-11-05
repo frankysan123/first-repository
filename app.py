@@ -247,7 +247,7 @@ def parse_dms_to_decimal(dms_string):
 def validate_azimuth(azimuth):
     """Validate azimuth value is within 0-360 degrees"""
     return 0 <= azimuth <= 360
-def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang='es'):
+def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang='es', bg_color='Blanco'):
     """Create interactive plot for multiple points and polygon"""
     fig = go.Figure()
    
@@ -397,12 +397,15 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
                   f'| Área Puntos: {single_points_area:.3f} m² '
                   f'| Puntos Polígono Azimut: {len(results_df)} '
                   f'| Área Azimut: {polygon_area:.3f} m²')
+    plot_bgcolor = 'white' if bg_color == 'Blanco' else 'black'
+    grid_color = 'rgba(200,200,200,0.5)' if bg_color == 'Blanco' else 'rgba(100,100,100,0.5)'
+    font_color = 'black' if bg_color == 'Blanco' else 'white'
     fig.update_layout(
         title={
             'text': title_text,
             'x': 0.5,
             'xanchor': 'center',
-            'font': {'size': 20}
+            'font': {'size': 20, 'color': font_color}
         },
         xaxis_title='X (m)',
         yaxis_title='Y (m)',
@@ -412,18 +415,20 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             yanchor="top",
             y=1,
             xanchor="left",
-            x=1.02
+            x=1.02,
+            font=dict(color=font_color)
         ),
         hovermode='closest',
         height=1000,
         width=1600,
         yaxis=dict(scaleanchor="x", scaleratio=1),
-        plot_bgcolor='rgba(240,240,240,0.5)',
-        dragmode='pan'
+        plot_bgcolor=plot_bgcolor,
+        dragmode='pan',
+        font=dict(color=font_color)
     )
    
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(200,200,200,0.5)')
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor=grid_color, title_font=dict(color=font_color), tickfont=dict(color=font_color))
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor=grid_color, title_font=dict(color=font_color), tickfont=dict(color=font_color))
    
     config = {
         'displayModeBar': True,
@@ -488,6 +493,9 @@ def main():
     st.sidebar.subheader(get_text('reference_point', lang))
     ref_x = st.sidebar.number_input(get_text('reference_x', lang), value=1000.0, help=get_text('reference_x_help', lang))
     ref_y = st.sidebar.number_input(get_text('reference_y', lang), value=1000.0, help=get_text('reference_y_help', lang))
+   
+    # Opción para fondo del gráfico
+    bg_color = st.sidebar.selectbox("Fondo del Gráfico", ['Blanco', 'Negro'])
    
     # Batch Conversion Section
     st.header(get_text('batch_conversion', lang))
@@ -774,7 +782,7 @@ def main():
    
     results_df = st.session_state.get('results_df', pd.DataFrame())
     try:
-        fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang)
+        fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang, bg_color)
         st.plotly_chart(fig, use_container_width=False, config=config)
     except Exception as e:
         st.error(f"Error de visualización: {str(e)}")
