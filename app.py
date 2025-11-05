@@ -8,12 +8,6 @@ import plotly.graph_objects as go
 
 # ---------------------------
 # Azimuth Converter - Versión limpia (solo español)
-# Mejoras incluidas:
-# - Código en un solo idioma (español)
-# - Selector de tema (Claro/Oscuro) elegante en la barra lateral
-# - CSS mejorado para móvil y botones
-# - Se eliminaron variables y lógica de idioma innecesarias
-# - Limpieza general y pequeños ajustes UI
 # ---------------------------
 
 # Contador de visitas (imagen)
@@ -251,14 +245,14 @@ def main():
                     new_point = pd.DataFrame({'X':[x], 'Y':[y]})
                     st.session_state.single_points = pd.concat([st.session_state.single_points, new_point], ignore_index=True)
                     st.success(f'✅ ¡Punto agregado! Total puntos: {len(st.session_state.single_points)}')
-                    
+
                 except Exception as e:
                     st.error(f'❌ Error al agregar punto: {str(e)}')
     with col_btn2:
         if st.button('🗑️ Limpiar Puntos', key='clear_points'):
             st.session_state.single_points = pd.DataFrame({'X':[], 'Y':[]})
             st.success('✅ ¡Todos los puntos eliminados!')
-            
+
     with col_btn3:
         st.info(f'**Puntos actuales:** {len(st.session_state.single_points)}')
         if not st.session_state.single_points.empty:
@@ -298,35 +292,41 @@ def main():
         st.write('**Datos Actuales:**')
         st.dataframe(st.session_state.batch_data, use_container_width=True, height=250)
 
-    if 'form_counter' not in st.session_state:
-        st.session_state.form_counter = 0
-
-    with st.form(f"add_entry_form_{st.session_state.form_counter}"):
+    # -------------------------------------------------------
+    # Formulario de entrada (clave FIXTA para evitar doble click)
+    # -------------------------------------------------------
+    with st.form("add_entry_form"):
         st.write('**Agregar Nueva Entrada:**')
         col1, col2, col3 = st.columns([2,1,1])
         with col1:
             new_azimuth = st.text_input('Azimut', value='', placeholder='26 56 7.00 o 26.935', help='Formatos fáciles: 26 56 7.00 | 26-56-7.00 | 26:56:7.00 | 26.935')
         with col2:
-            new_distance = st.number_input('Distancia', value=None, step=0.001, format='%.3f')
+            # valor por defecto 0.0 para evitar None
+            new_distance = st.number_input('Distancia', value=0.0, step=0.001, format='%.3f')
         with col3:
             submitted = st.form_submit_button('➕ Agregar Entrada')
-        if submitted and new_azimuth and new_distance is not None and new_distance > 0:
-            new_row = pd.DataFrame({'Azimuth':[new_azimuth], 'Distance':[new_distance]})
-            st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
-            st.session_state.form_counter += 1
-            st.success('✅ ¡Entrada agregada!')
-            
+
+        if submitted:
+            # procesar en el mismo ciclo de ejecución
+            if new_azimuth and (new_distance is not None) and new_distance > 0:
+                try:
+                    new_row = pd.DataFrame({'Azimuth':[new_azimuth.strip()], 'Distance':[float(new_distance)]})
+                    st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
+                    st.success('✅ ¡Entrada agregada!')
+                except Exception as e:
+                    st.error(f'❌ Error al agregar entrada: {e}')
+            else:
+                st.error('⚠️ Ingresa un azimut válido y una distancia mayor a 0.')
 
     st.markdown('---')
     col1, col2 = st.columns(2)
     with col1:
         if st.button('🗑️ Limpiar Todos los Datos'):
             st.session_state.batch_data = pd.DataFrame({'Azimuth':[], 'Distance':[]})
-            
+
     with col2:
         if st.button('📝 Restablecer a Ejemplos'):
             st.session_state.batch_data = pd.DataFrame({'Azimuth': ['26 56 7.00','90-0-0','180:30:15.5','270_45_30'], 'Distance':[5.178,1.000,1.000,1.000]})
-            
 
     if st.button('🔄 Convertir Todo', type='primary'):
         if not st.session_state.batch_data.empty:
