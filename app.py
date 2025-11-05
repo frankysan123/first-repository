@@ -432,6 +432,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         width=1600,
         yaxis=dict(scaleanchor="x", scaleratio=1),
         plot_bgcolor=plot_bgcolor,
+        paper_bgcolor=plot_bgcolor,
         dragmode='pan',
         font=dict(color=font_color)
     )
