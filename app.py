@@ -135,6 +135,21 @@ st.markdown("""
             font-size: 12px;
         }
     }
+
+    /* Mejoras para responsividad en portrait */
+    @media (orientation: portrait) {
+        div[data-testid="stPlotlyChart"] {
+            height: 50vh !important;
+            width: 100% !important;
+        }
+        .js-plotly-plot .plotly .modebar {
+            top: 0 !important;
+            right: 0 !important;
+        }
+        .js-plotly-plot .plotly {
+            height: 50vh !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 # JavaScript to prevent pull-to-refresh
@@ -794,7 +809,7 @@ def main():
     results_df = st.session_state.get('results_df', pd.DataFrame())
     try:
         fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang, bg_color)
-        st.plotly_chart(fig, use_container_width=False, config=config)
+        st.plotly_chart(fig, use_container_width=True, config=config)
     except Exception as e:
         st.error(f"Error de visualización: {str(e)}")
    
