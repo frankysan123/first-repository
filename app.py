@@ -13,6 +13,14 @@ import concurrent.futures
 from functools import lru_cache
 import gc
 import threading
+
+# Optional imports for performance monitoring
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    psutil = None
 # To show a hit counter image in Streamlit
 st.markdown(
     '<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fpolar2xy.streamlit.app%2F&label=visitas&icon=github&color=%233dd5f3&message=&style=flat&tz=UTC">',
@@ -292,11 +300,10 @@ class PerformanceManager:
     def _should_clear_cache(self):
         """Determinar si se debe limpiar el caché"""
         # Implementar lógica basada en uso de memoria
-        try:
-            import psutil
+        if PSUTIL_AVAILABLE and psutil is not None:
             memory_info = psutil.virtual_memory()
             return memory_info.percent > 80  # Limpiar si uso > 80%
-        except ImportError:
+        else:
             # Fallback simple: limpiar cada 50 operaciones
             return len(self._cache_stats) > 50
     
@@ -309,10 +316,9 @@ class PerformanceManager:
     
     def _get_memory_usage(self):
         """Obtener uso de memoria actual"""
-        try:
-            import psutil
+        if PSUTIL_AVAILABLE and psutil is not None:
             return psutil.Process().memory_info().rss / 1024 / 1024  # MB
-        except ImportError:
+        else:
             # Fallback: estimar uso basado en operaciones
             return len(self._cache_stats) * 0.5  # Estimación simple
 
@@ -951,20 +957,18 @@ def main():
         st.metric("⚡ Caché Hits", cache_hits,
                  help="Número de operaciones aceleradas por caché")
     with col2:
-        try:
-            import psutil
+        if PSUTIL_AVAILABLE and psutil is not None:
             cpu_percent = psutil.cpu_percent(interval=0.1)
             st.metric("💻 CPU Uso", f"{cpu_percent}%",
                      help="Uso actual del procesador")
-        except ImportError:
+        else:
             st.metric("💻 Estado", "Activo", help="Sistema operativo - optimizado")
     with col3:
-        try:
-            import psutil
+        if PSUTIL_AVAILABLE and psutil is not None:
             memory = psutil.virtual_memory()
             st.metric("🧠 Memoria", f"{memory.percent}%",
                      help="Uso de memoria del sistema")
-        except ImportError:
+        else:
             memory_estimate = len(perf_manager._cache_stats) * 0.5
             st.metric("🧠 Memoria", f"~{memory_estimate:.1f}MB", 
                      help="Estimación de uso de memoria")
