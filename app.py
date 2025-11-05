@@ -6,27 +6,60 @@ import io
 import re
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import json
+from datetime import datetime
 # To show a hit counter image in Streamlit
 st.markdown(
     '<img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fpolar2xy.streamlit.app%2F&label=visitas&icon=github&color=%233dd5f3&message=&style=flat&tz=UTC">',
     unsafe_allow_html=True
 )
-# Custom CSS for better UI
+# Custom CSS for better UI - MEJORADO
 st.markdown("""
 <style>
-    /* Responsive design */
+    /* TEMAS DE COLOR */
+    :root {
+        --primary-color: #2563eb;
+        --secondary-color: #1e40af;
+        --success-color: #059669;
+        --warning-color: #d97706;
+        --error-color: #dc2626;
+        --background-light: #f8fafc;
+        --background-dark: #0f172a;
+        --text-light: #1e293b;
+        --text-dark: #e2e8f0;
+    }
+    
+    /* Responsive design mejorado */
     @media (max-width: 768px) {
+        .main-header {
+            font-size: 1.8rem !important;
+            padding: 0.5rem !important;
+        }
+        .stButton > button {
+            width: 100% !important;
+            margin: 0.25rem 0 !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
         .main-header {
             font-size: 1.5rem !important;
         }
     }
    
     .main-header {
-        font-size: 2.2rem;
-        color: #1f77b4;
+        font-size: 2.5rem;
+        color: var(--primary-color);
         text-align: center;
-        margin-bottom: 1rem;
-        font-weight: bold;
+        margin-bottom: 2rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        padding: 1rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
     }
    
     /* Plotly controls styling */
@@ -234,28 +267,84 @@ TRANSLATIONS = {
 def get_text(key, lang='es'):
     """Get translated text for the given key and language"""
     return TRANSLATIONS['es'].get(key, key)
+@st.cache_data(show_spinner=False)
 def calculate_polygon_area(coordinates):
-    """Calculate polygon area using the Shoelace formula"""
+    """Calculate polygon area using the Shoelace formula - OPTIMIZADO"""
     if len(coordinates) < 3:
         return 0.0
-   
-    n = len(coordinates)
-    area = 0.0
-   
-    for i in range(n):
-        j = (i + 1) % n
-        area += coordinates[i][0] * coordinates[j][1]
-        area -= coordinates[i][1] * coordinates[j][0]
-   
+    
+    # Convertir a numpy array para mejor rendimiento
+    coords = np.array(coordinates)
+    n = len(coords)
+    
+    # Usar vectorización de numpy para cálculo más rápido
+    i = np.arange(n)
+    j = (i + 1) % n
+    
+    area = np.sum(coords[i, 0] * coords[j, 1]) - np.sum(coords[i, 1] * coords[j, 0])
+    
     return abs(area) / 2.0
+
+@st.cache_data(show_spinner=False)
+def batch_calculate_coordinates(batch_data, ref_x, ref_y, azimuth_convention):
+    """Procesar lotes de cálculos con caché"""
+    results = []
+    current_ref_x, current_ref_y = ref_x, ref_y
+    
+    for index, row in batch_data.iterrows():
+        try:
+            azimuth = parse_dms_to_decimal(str(row['Azimuth']))
+            if azimuth is None:
+                continue
+                
+            distance = float(row['Distance'])
+            x, y = azimuth_to_coordinates(azimuth, distance, current_ref_x, current_ref_y, azimuth_convention)
+            
+            results.append({
+                'Row': index + 1,
+                'X': x,
+                'Y': y
+            })
+            
+            current_ref_x, current_ref_y = x, y
+            
+        except Exception:
+            continue
+    
+    return pd.DataFrame(results)
 def azimuth_to_coordinates(azimuth, distance, ref_x=0.0, ref_y=0.0, azimuth_convention="north"):
-    """Convert azimuth and distance to X,Y coordinates using Excel formulas"""
+    """Convert azimuth and distance to X,Y coordinates using Excel formulas - MEJORADO"""
+    
+    # Validación de entrada mejorada
+    if not isinstance(azimuth, (int, float)) or not isinstance(distance, (int, float)):
+        raise ValueError("Azimuth y distancia deben ser números")
+    
+    if distance < 0:
+        raise ValueError("La distancia no puede ser negativa")
+    
+    # Normalizar azimuth al rango 0-360 grados
+    azimuth = azimuth % 360
+    
+    # Manejo de casos especiales para distancias muy pequeñas
+    if distance < 1e-10:
+        return round(ref_x, 6), round(ref_y, 6)
+    
     azimuth_rad = math.radians(azimuth)
+    
+    # Cálculo con precisión mejorada
     x_offset = math.sin(azimuth_rad) * distance
     y_offset = distance * math.cos(azimuth_rad)
+    
     x = ref_x + x_offset
     y = ref_y + y_offset
-    return round(x, 3), round(y, 3)
+    
+    # Redondeo adaptativo basado en la magnitud
+    if abs(x) > 1000 or abs(y) > 1000:
+        precision = 3
+    else:
+        precision = 6
+    
+    return round(x, precision), round(y, precision)
 def parse_dms_to_decimal(dms_string):
     """Convert degrees-minutes-seconds format to decimal degrees"""
     try:
@@ -495,20 +584,142 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
     }
    
     return fig, config
-def main():
-    st.set_page_config(
-        page_title="Azimuth Converter",
-        page_icon="🧭",
-        layout="wide",
-        initial_sidebar_state="auto"
-    )
-   
-    # Indicador offline
-    st.markdown('<div class="offline-indicator">📱 Offline Ready</div>', unsafe_allow_html=True)
-   
-    # Initialize language
+
+def export_to_dxf(coordinates, filename="coordinates.dxf"):
+    """Exportar coordenadas a formato DXF para AutoCAD"""
+    dxf_content = f"""0
+SECTION
+2
+HEADER
+9
+$ACADVER
+1
+AC1015
+0
+ENDSEC
+0
+SECTION
+2
+ENTITIES
+"""
+    
+    # Agregar puntos
+    for i, (x, y) in enumerate(coordinates):
+        dxf_content += f"""0
+POINT
+8
+0
+10
+{x}
+20
+{y}
+30
+0.0
+"""
+    
+    # Agregar líneas conectando los puntos
+    if len(coordinates) > 1:
+        for i in range(len(coordinates)):
+            x1, y1 = coordinates[i]
+            x2, y2 = coordinates[(i + 1) % len(coordinates)]
+            dxf_content += f"""0
+LINE
+8
+1
+10
+{x1}
+20
+{y1}
+30
+0.0
+11
+{x2}
+21
+{y2}
+31
+0.0
+"""
+    
+    dxf_content += """0
+ENDSEC
+0
+EOF
+"""
+    
+    return dxf_content
+
+def export_to_json(data, metadata=None):
+    """Exportar datos a formato JSON con metadatos"""
+    export_data = {
+        "metadata": metadata or {
+            "created_at": datetime.now().isoformat(),
+            "version": "2.0",
+            "software": "Azimuth Converter"
+        },
+        "data": data.to_dict('records') if hasattr(data, 'to_dict') else data
+    }
+    
+    return json.dumps(export_data, indent=2, ensure_ascii=False)
+
+def export_to_kml(coordinates, name="Survey Points"):
+    """Exportar coordenadas a formato KML para Google Earth"""
+    kml_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<name>{name}</name>
+"""
+    
+    for i, (x, y) in enumerate(coordinates):
+        kml_content += f"""<Placemark>
+<name>Point {i+1}</name>
+<Point>
+<coordinates>{x},{y},0</coordinates>
+</Point>
+</Placemark>
+"""
+    
+    kml_content += """</Document>
+</kml>"""
+    
+    return kml_content
+# CONSTANTES Y CONFIGURACIONES
+CLOSURE_TOLERANCE = 0.01
+MAX_AZIMUTH_POINTS = 20
+PLOT_HEIGHT = 1000
+PLOT_WIDTH = 1600
+MAX_COORDINATE_VALUE = 1e6
+
+# CONFIGURACIÓN DE LA APLICACIÓN
+APP_CONFIG = {
+    'page_title': "Azimuth Converter",
+    'page_icon': "🧭",
+    'layout': "wide",
+    'initial_sidebar_state': "auto"
+}
+
+def initialize_session_state():
+    """Inicializar todas las variables de sesión"""
     if 'language' not in st.session_state:
         st.session_state.language = 'es'
+    
+    if 'single_points' not in st.session_state:
+        st.session_state.single_points = pd.DataFrame({'X': [], 'Y': []})
+    
+    if 'batch_data' not in st.session_state:
+        st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
+    
+    if 'results_df' not in st.session_state:
+        st.session_state.results_df = pd.DataFrame()
+
+def setup_page_config():
+    """Configurar la página de Streamlit"""
+    st.set_page_config(**APP_CONFIG)
+    st.markdown('<div class="offline-indicator">📱 Offline Ready</div>', unsafe_allow_html=True)
+
+def main():
+    """Función principal mejorada con mejor organización"""
+    setup_page_config()
+    initialize_session_state()
    
     # Initialize session state for points
     if 'single_points' not in st.session_state:
