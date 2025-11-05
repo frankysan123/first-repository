@@ -149,6 +149,29 @@ st.markdown("""
         .js-plotly-plot .plotly {
             height: 50vh !important;
         }
+        .stMarkdown, .stNumberInput, .stTextInput, .stButton {
+            margin-bottom: 0.5rem !important;
+            padding: 0.5rem !important;
+        }
+        .stExpander {
+            margin-bottom: 0.5rem !important;
+        }
+        .stDataFrame {
+            height: 200px !important;
+        }
+        .row-widget.stButton {
+            margin-top: 0.5rem !important;
+        }
+        .stMetric {
+            font-size: 14px !important;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+        }
+        .stColumns > div {
+            margin-bottom: 0.5rem !important;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
