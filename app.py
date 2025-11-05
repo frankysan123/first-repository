@@ -1042,7 +1042,7 @@ def save_data_to_local_storage():
         st.session_state['saved_data'] = json.dumps(data)
         
         # Llamar a JavaScript para guardar en localStorage
-        components.html(f"""
+        st.components.v1.html(f"""
         <script>
             window.parent.saveAzimuthData({json.dumps(batch_data_list)}, {json.dumps(single_points_list)}, {json.dumps({'x': st.session_state.get('ref_x', 1000.0), 'y': st.session_state.get('ref_y', 1000.0)})});
         </script>
@@ -1055,7 +1055,7 @@ def load_data_from_local_storage():
     """Cargar datos desde el almacenamiento local del navegador"""
     try:
         # Mostrar JavaScript para cargar datos
-        components.html("""
+        st.components.v1.html("""
         <script>
             // Intentar cargar datos guardados
             const savedData = localStorage.getItem('azimuthAppData');
@@ -1105,7 +1105,7 @@ def load_data_from_local_storage():
 def clear_saved_data():
     """Limpiar datos guardados"""
     try:
-        components.html("""
+        st.components.v1.html("""
         <script>
             window.parent.clearAzimuthData();
         </script>
@@ -1130,7 +1130,7 @@ def setup_page_config():
     )
     
     # Add JavaScript for data loading from localStorage
-    components.html("""
+    st.components.v1.html("""
     <script>
         // Función para cargar datos guardados al iniciar
         function loadSavedDataOnStartup() {
