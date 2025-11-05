@@ -360,6 +360,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         ))
        
         # Arrows for polygon direction
+        annotation_font_color = 'darkblue' if bg_color == 'Blanco' else 'white'
         for i, row in results_df.iterrows():
             if i == 0:
                 start_x, start_y = ref_x, ref_y
@@ -382,7 +383,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
                 arrowwidth=1.5,
                 arrowcolor='rgba(0,100,200,0.5)',
                 text="",
-                font=dict(size=15, color='darkblue'),
+                font=dict(size=15, color=annotation_font_color),
                 bgcolor='rgba(0,0,0,0)',
                 borderpad=0,
                 standoff=5
