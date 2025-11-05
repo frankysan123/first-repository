@@ -124,6 +124,17 @@ st.markdown("""
         font-size: 12px;
         z-index: 999;
     }
+
+    /* Optimización para tabla en móvil */
+    div[data-testid="stDataFrame"] {
+        overflow-x: auto;
+    }
+
+    @media (max-width: 768px) {
+        div[data-testid="stDataFrame"] {
+            font-size: 12px;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 # JavaScript to prevent pull-to-refresh
@@ -722,7 +733,15 @@ def main():
                 st.metric("Diferencia", f"{area_diff:.3f} m²")
        
         displayed_df = results_df.drop(columns=['Reference_X', 'Reference_Y'])
-        st.dataframe(displayed_df, use_container_width=True, height=300)
+        column_config = {
+            'Row': st.column_config.NumberColumn('Pt', width='small'),
+            'Azimuth_Original': st.column_config.TextColumn('Azimut Original', width='medium'),
+            'Azimuth_Decimal': st.column_config.NumberColumn('Azimut Decimal', width='medium'),
+            'Distance': st.column_config.NumberColumn('Distancia', width='small'),
+            'X_Coordinate': st.column_config.NumberColumn('X', width='medium'),
+            'Y_Coordinate': st.column_config.NumberColumn('Y', width='medium')
+        }
+        st.dataframe(displayed_df, column_config=column_config, use_container_width=True, height=300)
        
         csv_buffer = io.StringIO()
         displayed_df.to_csv(csv_buffer, index=False)
