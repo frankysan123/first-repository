@@ -1044,7 +1044,7 @@ def save_data_to_local_storage():
         # Llamar a JavaScript para guardar en localStorage
         components.html(f"""
         <script>
-            window.parent.saveAzimuthData({json.dumps(batch_data_list)}, {json.dumps(single_points_list)}, {json.dumps({'x': st.session_state.get('ref_x', 1000.0), 'y': st.session_state.get('ref_y', 1000.0)}));
+            window.parent.saveAzimuthData({json.dumps(batch_data_list)}, {json.dumps(single_points_list)}, {json.dumps({'x': st.session_state.get('ref_x', 1000.0), 'y': st.session_state.get('ref_y', 1000.0)})});
         </script>
         """, height=0)
         
