@@ -251,14 +251,14 @@ def main():
                     new_point = pd.DataFrame({'X':[x], 'Y':[y]})
                     st.session_state.single_points = pd.concat([st.session_state.single_points, new_point], ignore_index=True)
                     st.success(f'✅ ¡Punto agregado! Total puntos: {len(st.session_state.single_points)}')
-                    st.experimental_rerun()
+                    
                 except Exception as e:
                     st.error(f'❌ Error al agregar punto: {str(e)}')
     with col_btn2:
         if st.button('🗑️ Limpiar Puntos', key='clear_points'):
             st.session_state.single_points = pd.DataFrame({'X':[], 'Y':[]})
             st.success('✅ ¡Todos los puntos eliminados!')
-            st.experimental_rerun()
+            
     with col_btn3:
         st.info(f'**Puntos actuales:** {len(st.session_state.single_points)}')
         if not st.session_state.single_points.empty:
@@ -315,18 +315,18 @@ def main():
             st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
             st.session_state.form_counter += 1
             st.success('✅ ¡Entrada agregada!')
-            st.experimental_rerun()
+            
 
     st.markdown('---')
     col1, col2 = st.columns(2)
     with col1:
         if st.button('🗑️ Limpiar Todos los Datos'):
             st.session_state.batch_data = pd.DataFrame({'Azimuth':[], 'Distance':[]})
-            st.experimental_rerun()
+            
     with col2:
         if st.button('📝 Restablecer a Ejemplos'):
             st.session_state.batch_data = pd.DataFrame({'Azimuth': ['26 56 7.00','90-0-0','180:30:15.5','270_45_30'], 'Distance':[5.178,1.000,1.000,1.000]})
-            st.experimental_rerun()
+            
 
     if st.button('🔄 Convertir Todo', type='primary'):
         if not st.session_state.batch_data.empty:
