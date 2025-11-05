@@ -252,6 +252,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
     fig = go.Figure()
    
     # Reference point
+    ref_text_color = 'blue' if bg_color == 'Blanco' else 'lightblue'
     fig.add_trace(go.Scatter(
         x=[ref_x],
         y=[ref_y],
@@ -260,7 +261,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         marker=dict(color='blue', size=16, symbol='circle'),
         text=['REF'],
         textposition='bottom center',
-        textfont=dict(size=14, color='blue'),
+        textfont=dict(size=14, color=ref_text_color),
         hovertemplate='<b>Referencia</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
     ))
    
@@ -268,6 +269,8 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
     single_points_area = 0.0 # Initialize area for single points polygon
     if not single_points.empty:
         colors = ['red', 'orange', 'purple', 'brown', 'pink', 'gray', 'olive', 'cyan']
+        if bg_color == 'Negro':
+            colors = ['lightcoral', 'gold', 'violet', 'sienna', 'lightpink', 'lightgray', 'lightgreen', 'lightcyan']
        
         # Plot individual points
         for i, (_, row) in enumerate(single_points.iterrows()):
@@ -295,12 +298,13 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             all_x.append(all_x[0])
             all_y.append(all_y[0])
            
+            poly_line_color = 'green' if bg_color == 'Blanco' else 'lightgreen'
             fig.add_trace(go.Scatter(
                 x=all_x,
                 y=all_y,
                 mode='lines',
                 name='Polígono (Puntos Ingresados)',
-                line=dict(color='green', width=3),
+                line=dict(color=poly_line_color, width=3),
                 fill='toself',
                 fillcolor='rgba(40, 167, 69, 0.2)', # Light green fill
                 hoverinfo='skip'
@@ -312,12 +316,13 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
    
     # Current preview point (if entered)
     if x_coord != 0 or y_coord != 0:
+        preview_color = 'green' if bg_color == 'Blanco' else 'lightgreen'
         fig.add_trace(go.Scatter(
             x=[x_coord],
             y=[y_coord],
             mode='markers',
             name='Punto Actual (Vista Previa)',
-            marker=dict(color='green', size=14, symbol='x'),
+            marker=dict(color=preview_color, size=14, symbol='x'),
             hovertemplate='<b>Punto Actual</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
         ))
    
@@ -328,18 +333,20 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         all_y = [ref_y] + results_df['Y_Coordinate'].tolist()
        
         # Polygon trace
+        poly_az_line_color = 'blue' if bg_color == 'Blanco' else 'lightblue'
         fig.add_trace(go.Scatter(
             x=all_x + [all_x[0]],
             y=all_y + [all_y[0]],
             mode='lines',
             name='Polígono (Azimut)',
-            line=dict(color='blue', width=3),
+            line=dict(color=poly_az_line_color, width=3),
             fill='toself',
             fillcolor='rgba(31, 119, 180, 0.2)',
             hoverinfo='skip'
         ))
        
         # Polygon points
+        marker_color = 'red' if bg_color == 'Blanco' else 'lightcoral'
         if len(results_df) <= 20:
             labels = [f'A{i+1}' for i in range(len(results_df))]
             mode = 'markers+text'
@@ -352,15 +359,16 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             y=results_df['Y_Coordinate'],
             mode=mode,
             name='Puntos del Polígono (Azimut)',
-            marker=dict(color='red', size=10, symbol='circle'),
+            marker=dict(color=marker_color, size=10, symbol='circle'),
             text=labels,
             textposition='top center',
-            textfont=dict(size=9),
+            textfont=dict(size=9, color=font_color),
             hovertemplate='<b>Punto A%{pointNumber}</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
         ))
        
         # Arrows for polygon direction
-        annotation_font_color = 'darkblue' if bg_color == 'Blanco' else 'white'
+        arrow_color = 'rgba(0,100,200,0.5)' if bg_color == 'Blanco' else 'rgba(173,216,230,0.5)'
+        annotation_font_color = 'darkblue' if bg_color == 'Blanco' else 'lightblue'
         for i, row in results_df.iterrows():
             if i == 0:
                 start_x, start_y = ref_x, ref_y
@@ -381,7 +389,7 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
                 arrowhead=2,
                 arrowsize=1,
                 arrowwidth=1.5,
-                arrowcolor='rgba(0,100,200,0.5)',
+                arrowcolor=arrow_color,
                 text="",
                 font=dict(size=15, color=annotation_font_color),
                 bgcolor='rgba(0,0,0,0)',
