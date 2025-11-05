@@ -791,8 +791,6 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
         dragmode='pan',
         font=dict(color=font_color, size=12),  # Base font size
         autosize=True,  # Enable responsive sizing
-        # Responsive configuration
-        responsive=True,
         # Mobile-optimized modebar
         modebar=dict(
             orientation='h',
