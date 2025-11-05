@@ -182,6 +182,53 @@ st.markdown("""
         }
     }
 
+    /* Plotly chart responsive optimizations */
+    .js-plotly-plot .plotly {
+        width: 100% !important;
+        height: auto !important;
+    }
+
+    /* Mobile-specific plot adjustments */
+    @media (max-width: 768px) {
+        .js-plotly-plot .plotly {
+            font-size: 12px !important;
+        }
+        
+        .js-plotly-plot .plotly .legend {
+            font-size: 10px !important;
+        }
+        
+        .js-plotly-plot .plotly .xtitle,
+        .js-plotly-plot .plotly .ytitle {
+            font-size: 12px !important;
+        }
+        
+        .js-plotly-plot .plotly .xtick,
+        .js-plotly-plot .plotly .ytick {
+            font-size: 9px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .js-plotly-plot .plotly {
+            font-size: 10px !important;
+        }
+        
+        .js-plotly-plot .plotly .legend {
+            font-size: 8px !important;
+        }
+        
+        .js-plotly-plot .plotly .xtitle,
+        .js-plotly-plot .plotly .ytitle {
+            font-size: 10px !important;
+        }
+        
+        .js-plotly-plot .plotly .xtick,
+        .js-plotly-plot .plotly .ytick {
+            font-size: 8px !important;
+        }
+    }
+
     /* Mejoras para responsividad en portrait */
     @media (orientation: portrait) {
         div[data-testid="stPlotlyChart"] {
@@ -668,36 +715,41 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             hovertemplate='<b>Punto A%{pointNumber}</b><br>X: %{x:.3f}<br>Y: %{y:.3f}<extra></extra>'
         ))
        
-        # Arrows for polygon direction
+        # Arrows for polygon direction (optimized for mobile)
         arrow_color = 'rgba(0,100,200,0.5)' if bg_color == 'Blanco' else 'rgba(173,216,230,0.5)'
         annotation_font_color = 'darkblue' if bg_color == 'Blanco' else 'lightblue'
-        for i, row in results_df.iterrows():
-            if i == 0:
-                start_x, start_y = ref_x, ref_y
-            else:
-                start_x = results_df.iloc[i-1]['X_Coordinate']
-                start_y = results_df.iloc[i-1]['Y_Coordinate']
-           
-            fig.add_annotation(
-                x=row['X_Coordinate'],
-                y=row['Y_Coordinate'],
-                ax=start_x,
-                ay=start_y,
-                xref="x",
-                yref="y",
-                axref="x",
-                ayref="y",
-                showarrow=True,
-                arrowhead=2,
-                arrowsize=1,
-                arrowwidth=1.5,
-                arrowcolor=arrow_color,
-                text="",
-                font=dict(size=15, color=annotation_font_color),
-                bgcolor='rgba(0,0,0,0)',
-                borderpad=0,
-                standoff=5
-            )
+        
+        # Only show arrows for small datasets on mobile
+        show_arrows = len(results_df) <= 10  # Limit arrows on mobile
+        
+        if show_arrows:
+            for i, row in results_df.iterrows():
+                if i == 0:
+                    start_x, start_y = ref_x, ref_y
+                else:
+                    start_x = results_df.iloc[i-1]['X_Coordinate']
+                    start_y = results_df.iloc[i-1]['Y_Coordinate']
+               
+                fig.add_annotation(
+                    x=row['X_Coordinate'],
+                    y=row['Y_Coordinate'],
+                    ax=start_x,
+                    ay=start_y,
+                    xref="x",
+                    yref="y",
+                    axref="x",
+                    ayref="y",
+                    showarrow=True,
+                    arrowhead=2,
+                    arrowsize=0.8,  # Smaller arrows for mobile
+                    arrowwidth=1,
+                    arrowcolor=arrow_color,
+                    text="",
+                    font=dict(size=10, color=annotation_font_color),  # Smaller font
+                    bgcolor='rgba(0,0,0,0)',
+                    borderpad=0,
+                    standoff=3  # Reduced standoff for mobile
+                )
        
         # Calculate polygon area
         coordinates = [(ref_x, ref_y)] + list(zip(results_df['X_Coordinate'], results_df['Y_Coordinate']))
@@ -716,45 +768,75 @@ def create_multi_point_plot(single_points, results_df, ref_x, ref_y, x_coord, y_
             'text': title_text,
             'x': 0.5,
             'xanchor': 'center',
-            'font': {'size': 20, 'color': font_color}
+            'font': {'size': 16, 'color': font_color}  # Smaller title for mobile
         },
         xaxis_title='X (m)',
         yaxis_title='Y (m)',
         showlegend=True,
         legend=dict(
-            orientation="v",
-            yanchor="top",
-            y=1,
-            xanchor="left",
-            x=1.02,
-            font=dict(color=font_color)
+            orientation="h",  # Horizontal legend for mobile
+            yanchor="bottom",
+            y=-0.15,  # Position below plot
+            xanchor="center",
+            x=0.5,
+            font=dict(color=font_color, size=10)  # Smaller legend text
         ),
         hovermode='closest',
-        height=1000,
-        width=1600,
+        height=600,  # Reduced height for mobile
+        width=None,  # Auto-width for responsiveness
+        margin=dict(l=50, r=20, t=80, b=100),  # Better margins for mobile
         yaxis=dict(scaleanchor="x", scaleratio=1),
         plot_bgcolor=plot_bgcolor,
         paper_bgcolor=plot_bgcolor,
         dragmode='pan',
-        font=dict(color=font_color)
+        font=dict(color=font_color, size=12),  # Base font size
+        autosize=True,  # Enable responsive sizing
+        # Responsive configuration
+        responsive=True,
+        # Mobile-optimized modebar
+        modebar=dict(
+            orientation='h',
+            bgcolor='rgba(255,255,255,0.7)',
+            color='#333',
+            activecolor='#1f77b4'
+        )
     )
    
-    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor=grid_color, title_font=dict(color=font_color), tickfont=dict(color=font_color))
-    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor=grid_color, title_font=dict(color=font_color), tickfont=dict(color=font_color))
+    fig.update_xaxes(
+        showgrid=True, 
+        gridwidth=1, 
+        gridcolor=grid_color, 
+        title_font=dict(color=font_color, size=12), 
+        tickfont=dict(color=font_color, size=10),  # Smaller ticks
+        tickangle=0,  # Horizontal ticks
+        automargin=True  # Auto margin for labels
+    )
+    fig.update_yaxes(
+        showgrid=True, 
+        gridwidth=1, 
+        gridcolor=grid_color, 
+        title_font=dict(color=font_color, size=12), 
+        tickfont=dict(color=font_color, size=10),  # Smaller ticks
+        automargin=True  # Auto margin for labels
+    )
    
     config = {
         'displayModeBar': True,
         'displaylogo': False,
-        'modeBarButtonSize': 20,
+        'modeBarButtonSize': 14,  # Smaller buttons for mobile
         'doubleClick': 'reset',
         'scrollZoom': True,
         'toImageButtonOptions': {
             'format': 'png',
             'filename': 'combined_plot',
-            'height': 1000,
-            'width': 1600,
-            'scale': 2
-        }
+            'height': 800,  # Smaller export size
+            'width': 1200,
+            'scale': 1.5
+        },
+        # Mobile-specific options
+        'modeBarButtonsToAdd': ['drawline', 'drawopenpath', 'eraseshape'],
+        'modeBarButtonsToRemove': ['lasso2d', 'select2d', 'autoScale2d'],
+        'locale': 'es'  # Spanish locale
     }
    
     return fig, config
@@ -889,6 +971,12 @@ def setup_page_config():
     """Configurar la página de Streamlit"""
     st.set_page_config(**APP_CONFIG)
     st.markdown('<div class="offline-indicator">📱 Offline Ready</div>', unsafe_allow_html=True)
+    
+    # Add mobile viewport meta tag
+    st.markdown(
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">',
+        unsafe_allow_html=True
+    )
 
 def main():
     """Función principal mejorada con mejor organización y controles de rendimiento"""
@@ -1285,7 +1373,24 @@ def main():
     results_df = st.session_state.get('results_df', pd.DataFrame())
     try:
         fig, config = create_multi_point_plot(st.session_state.single_points, results_df, ref_x, ref_y, x_coord, y_coord, lang, bg_color)
-        st.plotly_chart(fig, use_container_width=True, config=config)
+        
+        # Enhanced responsive configuration for mobile
+        responsive_config = config.copy()
+        responsive_config.update({
+            'responsive': True,
+            'displayModeBar': True,
+            'displaylogo': False,
+            'modeBarButtonsToRemove': ['lasso2d', 'select2d', 'resetScale2d'],
+            'toImageButtonOptions': {
+                'format': 'png',
+                'filename': 'azimuth_plot_mobile',
+                'height': 600,
+                'width': 800,
+                'scale': 1
+            }
+        })
+        
+        st.plotly_chart(fig, use_container_width=True, config=responsive_config)
     except Exception as e:
         st.error(f"Error de visualización: {str(e)}")
    
