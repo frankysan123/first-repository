@@ -14,6 +14,7 @@ from functools import lru_cache
 import gc
 import threading
 from streamlit import components
+import time
 
 # Optional imports for performance monitoring
 try:
@@ -290,17 +291,20 @@ st.markdown("""
 st.markdown("""
 <script>
     // Save data to localStorage
-    function saveAzimuthData() {
+    function saveAzimuthData(batchData, singlePoints, referencePoint) {
         try {
             const data = {
-                batch_data: window.batchData || [],
-                single_points: window.singlePoints || [],
-                reference_point: window.referencePoint || {x: 1000, y: 1000},
+                batch_data: batchData || [],
+                single_points: singlePoints || [],
+                reference_point: referencePoint || {x: 1000, y: 1000},
                 timestamp: new Date().toISOString()
             };
             localStorage.setItem('azimuthAppData', JSON.stringify(data));
+            console.log('Datos guardados exitosamente');
+            return true;
         } catch (e) {
             console.log('Error saving data:', e);
+            return false;
         }
     }
     
@@ -321,13 +325,18 @@ st.markdown("""
     function clearAzimuthData() {
         try {
             localStorage.removeItem('azimuthAppData');
+            console.log('Datos limpiados exitosamente');
+            return true;
         } catch (e) {
             console.log('Error clearing data:', e);
+            return false;
         }
     }
     
-    // Auto-save functionality
-    setInterval(saveAzimuthData, 5000); // Save every 5 seconds
+    // Auto-save functionality - se ejecutará desde Python
+    window.saveAzimuthData = saveAzimuthData;
+    window.loadAzimuthData = loadAzimuthData;
+    window.clearAzimuthData = clearAzimuthData;
 </script>
 """, unsafe_allow_html=True)
 # Language translations (solo español)
@@ -1032,6 +1041,13 @@ def save_data_to_local_storage():
         # Guardar en el almacenamiento de sesión
         st.session_state['saved_data'] = json.dumps(data)
         
+        # Llamar a JavaScript para guardar en localStorage
+        components.html(f"""
+        <script>
+            window.parent.saveAzimuthData({json.dumps(batch_data_list)}, {json.dumps(single_points_list)}, {json.dumps({'x': st.session_state.get('ref_x', 1000.0), 'y': st.session_state.get('ref_y', 1000.0)}));
+        </script>
+        """, height=0)
+        
     except Exception as e:
         st.error(f"Error al guardar datos: {str(e)}")
 
@@ -1042,7 +1058,7 @@ def load_data_from_local_storage():
         components.html("""
         <script>
             // Intentar cargar datos guardados
-            const savedData = localStorage.getItem('azimuthData');
+            const savedData = localStorage.getItem('azimuthAppData');
             if (savedData) {
                 try {
                     const data = JSON.parse(savedData);
@@ -1089,11 +1105,11 @@ def load_data_from_local_storage():
 def clear_saved_data():
     """Limpiar datos guardados"""
     try:
-        st.markdown("""
+        components.html("""
         <script>
-            clearAzimuthData();
+            window.parent.clearAzimuthData();
         </script>
-        """, unsafe_allow_html=True)
+        """, height=0)
         
         # Limpiar también el almacenamiento de sesión
         if 'saved_data' in st.session_state:
@@ -1114,12 +1130,12 @@ def setup_page_config():
     )
     
     # Add JavaScript for data loading from localStorage
-    st.markdown("""
+    components.html("""
     <script>
         // Función para cargar datos guardados al iniciar
         function loadSavedDataOnStartup() {
             try {
-                const savedData = localStorage.getItem('azimuthData');
+                const savedData = localStorage.getItem('azimuthAppData');
                 if (savedData) {
                     const data = JSON.parse(savedData);
                     
@@ -1144,7 +1160,7 @@ def setup_page_config():
             setTimeout(loadSavedDataOnStartup, 100);
         }
     </script>
-    """, unsafe_allow_html=True)
+    """, height=0)
 
 def main():
     """Función principal mejorada con mejor organización y controles de rendimiento"""
@@ -1187,6 +1203,47 @@ def main():
             
             st.success("✅ Datos guardados cargados automáticamente")
     
+    # 📊 DATA PERSISTENCE STATUS: Mostrar estado del guardado
+    if 'data_persistence_status' not in st.session_state:
+        st.session_state.data_persistence_status = {
+            'last_save': None,
+            'has_saved_data': False,
+            'auto_save_active': st.session_state.get('auto_save_enabled', True)
+        }
+    
+    # Verificar si hay datos guardados en localStorage
+    components.html("""
+    <script>
+        // Verificar si hay datos guardados
+        const hasData = localStorage.getItem('azimuthAppData') !== null;
+        
+        // Enviar estado a Streamlit
+        window.parent.postMessage({
+            type: 'dataPersistenceStatus',
+            hasSavedData: hasData
+        }, '*');
+    </script>
+    """, height=0)
+    
+    # 📡 MESSAGE HANDLER: Recibir datos de JavaScript
+    if 'message_handler_setup' not in st.session_state:
+        st.session_state.message_handler_setup = True
+        components.html("""
+        <script>
+            // Escuchar mensajes de JavaScript
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type === 'azimuthDataLoaded') {
+                    console.log('Datos recibidos desde JavaScript:', event.data.data);
+                    // Enviar datos a Streamlit mediante postMessage
+                    window.parent.postMessage({
+                        type: 'streamlit:setComponentValue',
+                        value: event.data.data
+                    }, '*');
+                }
+            });
+        </script>
+        """, height=0)
+    
     # 🚀 PERFORMANCE: Sidebar para controles de rendimiento
     with st.sidebar:
         st.header("⚡ Controles de Rendimiento")
@@ -1211,6 +1268,35 @@ def main():
         
         # 💾 DATA PERSISTENCE CONTROLS
         st.subheader("💾 Guardar Datos")
+        
+        # Estado de persistencia
+        col_status1, col_status2 = st.columns(2)
+        with col_status1:
+            if st.session_state.get('auto_save_enabled', True):
+                st.success("🟢 Auto-guardado")
+            else:
+                st.error("🔴 Auto-guardado apagado")
+        with col_status2:
+            # Verificar si hay datos guardados
+            has_saved_data = False
+            try:
+                components.html("""
+                <script>
+                    const hasData = localStorage.getItem('azimuthAppData') !== null;
+                    window.parent.postMessage({
+                        type: 'hasSavedDataCheck',
+                        hasData: hasData
+                    }, '*');
+                </script>
+                """, height=0)
+                
+                # Simplemente mostrar estado basado en session_state
+                if 'saved_data' in st.session_state:
+                    st.info("💾 Datos guardados")
+                else:
+                    st.warning("📭 Sin datos guardados")
+            except:
+                st.warning("📭 Estado desconocido")
         
         # Auto-save indicator
         auto_save = st.checkbox("Auto-guardar datos", value=st.session_state.get('auto_save_enabled', True), 
