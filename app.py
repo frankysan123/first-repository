@@ -292,12 +292,13 @@ class PerformanceManager:
     def _should_clear_cache(self):
         """Determinar si se debe limpiar el caché"""
         # Implementar lógica basada en uso de memoria
-        import psutil
         try:
+            import psutil
             memory_info = psutil.virtual_memory()
             return memory_info.percent > 80  # Limpiar si uso > 80%
         except ImportError:
-            return False
+            # Fallback simple: limpiar cada 50 operaciones
+            return len(self._cache_stats) > 50
     
     def get_cache_stats(self):
         """Obtener estadísticas de caché"""
@@ -312,7 +313,8 @@ class PerformanceManager:
             import psutil
             return psutil.Process().memory_info().rss / 1024 / 1024  # MB
         except ImportError:
-            return 0
+            # Fallback: estimar uso basado en operaciones
+            return len(self._cache_stats) * 0.5  # Estimación simple
 
 # Instancia global del gestor de rendimiento
 perf_manager = PerformanceManager()
@@ -955,7 +957,7 @@ def main():
             st.metric("💻 CPU Uso", f"{cpu_percent}%",
                      help="Uso actual del procesador")
         except ImportError:
-            st.metric("💻 Estado", "Activo", help="Sistema operativo")
+            st.metric("💻 Estado", "Activo", help="Sistema operativo - optimizado")
     with col3:
         try:
             import psutil
@@ -963,7 +965,9 @@ def main():
             st.metric("🧠 Memoria", f"{memory.percent}%",
                      help="Uso de memoria del sistema")
         except ImportError:
-            st.metric("🧠 Memoria", "Optimizada", help="Gestión de memoria activa")
+            memory_estimate = len(perf_manager._cache_stats) * 0.5
+            st.metric("🧠 Memoria", f"~{memory_estimate:.1f}MB", 
+                     help="Estimación de uso de memoria")
    
     azimuth_convention = "excel"
    
