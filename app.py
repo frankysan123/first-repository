@@ -1073,30 +1073,50 @@ def load_data_from_local_storage():
             }
         </script>
         """, height=0)
+        
+        # Intentar normalizar el valor devuelto del componente
+        parsed = None
+        if isinstance(data, dict):
+            parsed = data
+        elif isinstance(data, str):
+            try:
+                parsed = json.loads(data)
+            except Exception:
+                parsed = None
+        else:
+            parsed = None
 
-        # Si recibimos datos desde el componente, actualizamos el estado
-        if data:
-            st.session_state.loaded_azimuth_data = data
+        # Fallback: si el componente no devolvió datos, intentar desde session_state
+        if parsed is None and 'saved_data' in st.session_state:
+            try:
+                parsed = json.loads(st.session_state['saved_data'])
+            except Exception:
+                parsed = None
+
+        # Si logramos obtener un dict con datos, actualizamos el estado
+        if isinstance(parsed, dict):
+            st.session_state.loaded_azimuth_data = parsed
 
             # Actualizar DataFrames con datos cargados
-            if 'batch_data' in data and data['batch_data']:
-                st.session_state.batch_data = pd.DataFrame(data['batch_data'])
+            if parsed.get('batch_data'):
+                st.session_state.batch_data = pd.DataFrame(parsed['batch_data'])
             else:
                 st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
 
-            if 'single_points' in data and data['single_points']:
-                st.session_state.single_points = pd.DataFrame(data['single_points'])
+            if parsed.get('single_points'):
+                st.session_state.single_points = pd.DataFrame(parsed['single_points'])
             else:
                 st.session_state.single_points = pd.DataFrame({'X': [], 'Y': []})
 
-            if 'reference_point' in data and data['reference_point']:
-                st.session_state.ref_x = data['reference_point'].get('x', st.session_state.get('ref_x', 1000.0))
-                st.session_state.ref_y = data['reference_point'].get('y', st.session_state.get('ref_y', 1000.0))
+            if parsed.get('reference_point'):
+                st.session_state.ref_x = parsed['reference_point'].get('x', st.session_state.get('ref_x', 1000.0))
+                st.session_state.ref_y = parsed['reference_point'].get('y', st.session_state.get('ref_y', 1000.0))
 
             st.session_state.data_loaded = True
             st.success("📂 Datos cargados desde almacenamiento local")
             return True
 
+        # Si no hay datos
         st.info("📭 No se encontraron datos guardados")
         return False
     except Exception as e:
@@ -1190,19 +1210,30 @@ def main():
         # Si hay datos cargados, procesarlos
         if 'loaded_azimuth_data' in st.session_state:
             data = st.session_state.loaded_azimuth_data
-            
-            # Actualizar DataFrames con datos cargados
-            if 'batch_data' in data and data['batch_data']:
-                st.session_state.batch_data = pd.DataFrame(data['batch_data'])
-            
-            if 'single_points' in data and data['single_points']:
-                st.session_state.single_points = pd.DataFrame(data['single_points'])
-            
-            if 'reference_point' in data:
-                st.session_state.ref_x = data['reference_point']['x']
-                st.session_state.ref_y = data['reference_point']['y']
-            
-            st.success("✅ Datos guardados cargados automáticamente")
+
+            # Asegurar que 'data' es un dict válido
+            if not isinstance(data, dict):
+                if isinstance(data, str):
+                    try:
+                        data = json.loads(data)
+                    except Exception:
+                        data = None
+                else:
+                    data = None
+
+            if isinstance(data, dict):
+                # Actualizar DataFrames con datos cargados
+                if data.get('batch_data'):
+                    st.session_state.batch_data = pd.DataFrame(data['batch_data'])
+                
+                if data.get('single_points'):
+                    st.session_state.single_points = pd.DataFrame(data['single_points'])
+                
+                if data.get('reference_point'):
+                    st.session_state.ref_x = data['reference_point'].get('x', st.session_state.get('ref_x', 1000.0))
+                    st.session_state.ref_y = data['reference_point'].get('y', st.session_state.get('ref_y', 1000.0))
+                
+                st.success("✅ Datos guardados cargados automáticamente")
     
     # 📊 DATA PERSISTENCE STATUS: Mostrar estado del guardado
     if 'data_persistence_status' not in st.session_state:
