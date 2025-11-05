@@ -13,6 +13,7 @@ import concurrent.futures
 from functools import lru_cache
 import gc
 import threading
+from streamlit import components
 
 # Optional imports for performance monitoring
 try:
@@ -282,6 +283,51 @@ st.markdown("""
             e.preventDefault();
         }
     }, { passive: false });
+</script>
+""", unsafe_allow_html=True)
+
+# JavaScript for localStorage data persistence
+st.markdown("""
+<script>
+    // Save data to localStorage
+    function saveAzimuthData() {
+        try {
+            const data = {
+                batch_data: window.batchData || [],
+                single_points: window.singlePoints || [],
+                reference_point: window.referencePoint || {x: 1000, y: 1000},
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('azimuthAppData', JSON.stringify(data));
+        } catch (e) {
+            console.log('Error saving data:', e);
+        }
+    }
+    
+    // Load data from localStorage
+    function loadAzimuthData() {
+        try {
+            const saved = localStorage.getItem('azimuthAppData');
+            if (saved) {
+                return JSON.parse(saved);
+            }
+        } catch (e) {
+            console.log('Error loading data:', e);
+        }
+        return null;
+    }
+    
+    // Clear saved data
+    function clearAzimuthData() {
+        try {
+            localStorage.removeItem('azimuthAppData');
+        } catch (e) {
+            console.log('Error clearing data:', e);
+        }
+    }
+    
+    // Auto-save functionality
+    setInterval(saveAzimuthData, 5000); // Save every 5 seconds
 </script>
 """, unsafe_allow_html=True)
 # Language translations (solo español)
@@ -965,6 +1011,97 @@ def initialize_session_state():
     if 'results_df' not in st.session_state:
         st.session_state.results_df = pd.DataFrame()
 
+def save_data_to_local_storage():
+    """Guardar datos en el almacenamiento local del navegador"""
+    try:
+        # Convertir DataFrames a listas de diccionarios
+        batch_data_list = st.session_state.batch_data.to_dict('records') if not st.session_state.batch_data.empty else []
+        single_points_list = st.session_state.single_points.to_dict('records') if not st.session_state.single_points.empty else []
+        
+        # Crear objeto de datos
+        data = {
+            'batch_data': batch_data_list,
+            'single_points': single_points_list,
+            'reference_point': {
+                'x': st.session_state.get('ref_x', 1000.0),
+                'y': st.session_state.get('ref_y', 1000.0)
+            },
+            'timestamp': datetime.now().isoformat()
+        }
+        
+        # Guardar en el almacenamiento de sesión
+        st.session_state['saved_data'] = json.dumps(data)
+        
+    except Exception as e:
+        st.error(f"Error al guardar datos: {str(e)}")
+
+def load_data_from_local_storage():
+    """Cargar datos desde el almacenamiento local del navegador"""
+    try:
+        # Mostrar JavaScript para cargar datos
+        components.html("""
+        <script>
+            // Intentar cargar datos guardados
+            const savedData = localStorage.getItem('azimuthData');
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    
+                    // Enviar datos a Streamlit mediante un evento personalizado
+                    window.parent.postMessage({
+                        type: 'azimuthDataLoaded',
+                        data: data
+                    }, '*');
+                    
+                    // Mostrar confirmación
+                    console.log('Datos de azimut cargados exitosamente');
+                } catch (e) {
+                    console.error('Error al parsear datos guardados:', e);
+                }
+            } else {
+                console.log('No se encontraron datos guardados');
+            }
+        </script>
+        """, height=0)
+        
+        # Intentar cargar datos desde el almacenamiento de sesión temporal
+        if 'loaded_azimuth_data' in st.session_state:
+            data = st.session_state.loaded_azimuth_data
+            
+            # Actualizar DataFrames con datos cargados
+            if 'batch_data' in data and data['batch_data']:
+                st.session_state.batch_data = pd.DataFrame(data['batch_data'])
+            
+            if 'single_points' in data and data['single_points']:
+                st.session_state.single_points = pd.DataFrame(data['single_points'])
+            
+            if 'reference_point' in data:
+                st.session_state.ref_x = data['reference_point']['x']
+                st.session_state.ref_y = data['reference_point']['y']
+            
+            return True
+        
+        return False
+    except Exception as e:
+        st.error(f"Error al cargar datos: {str(e)}")
+        return False
+
+def clear_saved_data():
+    """Limpiar datos guardados"""
+    try:
+        st.markdown("""
+        <script>
+            clearAzimuthData();
+        </script>
+        """, unsafe_allow_html=True)
+        
+        # Limpiar también el almacenamiento de sesión
+        if 'saved_data' in st.session_state:
+            del st.session_state['saved_data']
+            
+    except Exception as e:
+        st.error(f"Error al limpiar datos: {str(e)}")
+
 def setup_page_config():
     """Configurar la página de Streamlit"""
     st.set_page_config(**APP_CONFIG)
@@ -975,11 +1112,80 @@ def setup_page_config():
         '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">',
         unsafe_allow_html=True
     )
+    
+    # Add JavaScript for data loading from localStorage
+    st.markdown("""
+    <script>
+        // Función para cargar datos guardados al iniciar
+        function loadSavedDataOnStartup() {
+            try {
+                const savedData = localStorage.getItem('azimuthData');
+                if (savedData) {
+                    const data = JSON.parse(savedData);
+                    
+                    // Enviar datos a Streamlit mediante postMessage
+                    window.parent.postMessage({
+                        type: 'azimuthDataLoaded',
+                        data: data
+                    }, '*');
+                    
+                    console.log('Datos de azimut cargados al inicio');
+                }
+            } catch (e) {
+                console.error('Error al cargar datos guardados:', e);
+            }
+        }
+        
+        // Cargar datos cuando la página se carga
+        window.addEventListener('load', loadSavedDataOnStartup);
+        
+        // También intentar cargar inmediatamente si el DOM ya está listo
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            setTimeout(loadSavedDataOnStartup, 100);
+        }
+    </script>
+    """, unsafe_allow_html=True)
 
 def main():
     """Función principal mejorada con mejor organización y controles de rendimiento"""
     setup_page_config()
     initialize_session_state()
+    
+    # 💾 AUTO-SAVE: Auto-guardado de datos
+    if 'auto_save_enabled' not in st.session_state:
+        st.session_state.auto_save_enabled = True
+    
+    if 'last_save_time' not in st.session_state:
+        st.session_state.last_save_time = time.time()
+    
+    # Auto-save cada 5 segundos si está habilitado
+    if st.session_state.auto_save_enabled:
+        current_time = time.time()
+        if current_time - st.session_state.last_save_time > 5:  # 5 segundos
+            save_data_to_local_storage()
+            st.session_state.last_save_time = current_time
+    
+    # 📂 DATA LOADING: Intentar cargar datos guardados al inicio
+    if 'data_loaded' not in st.session_state:
+        st.session_state.data_loaded = False
+        load_data_from_local_storage()
+        
+        # Si hay datos cargados, procesarlos
+        if 'loaded_azimuth_data' in st.session_state:
+            data = st.session_state.loaded_azimuth_data
+            
+            # Actualizar DataFrames con datos cargados
+            if 'batch_data' in data and data['batch_data']:
+                st.session_state.batch_data = pd.DataFrame(data['batch_data'])
+            
+            if 'single_points' in data and data['single_points']:
+                st.session_state.single_points = pd.DataFrame(data['single_points'])
+            
+            if 'reference_point' in data:
+                st.session_state.ref_x = data['reference_point']['x']
+                st.session_state.ref_y = data['reference_point']['y']
+            
+            st.success("✅ Datos guardados cargados automáticamente")
     
     # 🚀 PERFORMANCE: Sidebar para controles de rendimiento
     with st.sidebar:
@@ -1002,6 +1208,29 @@ def main():
             stats = perf_manager.get_cache_stats()
             st.metric("Caché hits", stats['cache_hits'])
             st.metric("Uso de memoria (MB)", f"{stats['memory_usage']:.2f}")
+        
+        # 💾 DATA PERSISTENCE CONTROLS
+        st.subheader("💾 Guardar Datos")
+        
+        # Auto-save indicator
+        auto_save = st.checkbox("Auto-guardar datos", value=st.session_state.get('auto_save_enabled', True), 
+                               help="Guardar automáticamente cada 5 segundos")
+        st.session_state.auto_save_enabled = auto_save
+        
+        # Manual save button
+        if st.button("💾 Guardar Ahora", help="Guardar datos actualmente en la aplicación"):
+            save_data_to_local_storage()
+            st.success("✅ Datos guardados localmente")
+        
+        # Load saved data
+        if st.button("📂 Cargar Datos Guardados", help="Cargar datos previamente guardados"):
+            load_data_from_local_storage()
+            st.info("📂 Datos cargados desde almacenamiento local")
+        
+        # Clear saved data
+        if st.button("🗑️ Limpiar Datos Guardados", help="Eliminar datos guardados del navegador"):
+            clear_saved_data()
+            st.success("🗑️ Datos guardados eliminados")
         
         # Configuración de rendimiento
         st.subheader("🔧 Configuración")
