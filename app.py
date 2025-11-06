@@ -1206,7 +1206,7 @@ def main():
     st.subheader("Carga de Datos por Lotes")
    
     # Removed the radio and CSV upload, only manual input
-    st.subheader("Ingresar Datos")
+    st.subheader("")
    
     if not st.session_state.batch_data.empty:
         st.write("**Datos Actuales:**")
@@ -1413,7 +1413,7 @@ def main():
         txt_data = txt_buffer.getvalue()
        
         st.download_button(
-            label="📥 Descargar Coordenadas como TXT (pt,x,y)",
+            label="📥 Descargar Coordenadas como TXT (Pt,X,Y)",
             data=txt_data,
             file_name="coordenadas.txt",
             mime="text/plain",
@@ -1447,15 +1447,7 @@ def main():
     except Exception as e:
         st.error(f"Error de visualización: {str(e)}")
    
-    with st.expander("ℹ️ Cómo usar la visualización"):
-        st.markdown("""
-        **Controles Interactivos:**
-        - 🏠 **Inicio**: Restablecer vista
-        - 🔍 **Zoom**: Acercar/alejar
-        - ↔️ **Desplazar**: Arrastrar para mover
-        - 📷 **Cámara**: Descargar como PNG
-        - 🖱️ **Rueda**: Zoom con la rueda del ratón
-        - 🖐️ **Doble clic**: Restablecer zoom
+   
        
         **Leyenda:**
         - 🔵 **Círculo Azul (REF)**: Punto de referencia
