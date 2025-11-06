@@ -1447,8 +1447,9 @@ def main():
     except Exception as e:
         st.error(f"Error de visualización: {str(e)}")
    
-   st.markdown(
-    """
+   if show_legend:
+    st.markdown(
+        """
 **Leyenda:**
 - 🔵 **Círculo Azul (REF)**: Punto de referencia
 - 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
@@ -1458,6 +1459,6 @@ def main():
 - 🟢 **Línea Verde**: Perímetro del polígono (puntos ingresados)
 - ➡️ **Flechas**: Dirección del polígono (azimut)
 """
-)
+    )
 if __name__ == "__main__":
     main()
