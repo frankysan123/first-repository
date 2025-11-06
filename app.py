@@ -1103,28 +1103,7 @@ def main():
         - ➡️ **Flechas**: Dirección del polígono (azimut)
         """)
 
-    # 🚀 PERFORMANCE: Indicador de rendimiento
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        cache_hits = len(perf_manager._cache_stats)
-        st.metric("⚡ Caché Hits", cache_hits,
-                 help="Número de operaciones aceleradas por caché")
-    with col2:
-        if PSUTIL_AVAILABLE and psutil is not None:
-            cpu_percent = psutil.cpu_percent(interval=0.1)
-            st.metric("💻 CPU Uso", f"{cpu_percent}%",
-                     help="Uso actual del procesador")
-        else:
-            st.metric("💻 Estado", "Activo", help="Sistema operativo - optimizado")
-    with col3:
-        if PSUTIL_AVAILABLE and psutil is not None:
-            memory = psutil.virtual_memory()
-            st.metric("🧠 Memoria", f"{memory.percent}%",
-                     help="Uso de memoria del sistema")
-        else:
-            memory_estimate = len(perf_manager._cache_stats) * 0.5
-            st.metric("🧠 Memoria", f"~{memory_estimate:.1f}MB", 
-                     help="Estimación de uso de memoria")
+    # Indicadores de rendimiento removidos a solicitud del usuario
    
     azimuth_convention = "excel"
    
