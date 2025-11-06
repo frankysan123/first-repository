@@ -1447,16 +1447,17 @@ def main():
     except Exception as e:
         st.error(f"Error de visualización: {str(e)}")
    
-   
-       #st.markdown("""
-        **Leyenda:**
-       # - 🔵 **Círculo Azul (REF)**: Punto de referencia
-        - 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
-        - 🔴 **Círculos (A1, A2, ...)**: Puntos del polígono (de azimuts)
-        - 🟢 **X Verde**: Punto actual (vista previa)
-        - 🔵 **Línea Azul**: Perímetro del polígono (azimut)
-        - 🟢 **Línea Verde**: Perímetro del polígono (puntos ingresados)
-        - ➡️ **Flechas**: Dirección del polígono (azimut)
-        """)
+   st.markdown(
+    """
+**Leyenda:**
+- 🔵 **Círculo Azul (REF)**: Punto de referencia
+- 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
+- 🔴 **Círculos (A1, A2, ...)**: Puntos del polígono (de azimuts)
+- 🟢 **X Verde**: Punto actual (vista previa)
+- 🔵 **Línea Azul**: Perímetro del polígono (azimut)
+- 🟢 **Línea Verde**: Perímetro del polígono (puntos ingresados)
+- ➡️ **Flechas**: Dirección del polígono (azimut)
+"""
+)
 if __name__ == "__main__":
     main()
