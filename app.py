@@ -1083,6 +1083,26 @@ def main():
     st.title(get_text('title', lang))
     st.markdown(get_text('subtitle', lang))
 
+    with st.expander("ℹ️ Cómo usar la visualización"):
+        st.markdown("""
+        **Controles Interactivos:**
+        - 🏠 **Inicio**: Restablecer vista
+        - 🔍 **Zoom**: Acercar/alejar
+        - ↔️ **Desplazar**: Arrastrar para mover
+        - 📷 **Cámara**: Descargar como PNG
+        - 🖱️ **Rueda**: Zoom con la rueda del ratón
+        - 🖐️ **Doble clic**: Restablecer zoom
+       
+        **Leyenda:**
+        - 🔵 **Círculo Azul (REF)**: Punto de referencia
+        - 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
+        - 🔴 **Círculos (A1, A2, ...)**: Puntos del polígono (de azimuts)
+        - 🟢 **X Verde**: Punto actual (vista previa)
+        - 🔵 **Línea Azul**: Perímetro del polígono (azimut)
+        - 🟢 **Línea Verde**: Perímetro del polígono (puntos ingresados)
+        - ➡️ **Flechas**: Dirección del polígono (azimut)
+        """)
+
     # 🚀 PERFORMANCE: Indicador de rendimiento
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -1447,24 +1467,5 @@ def main():
     except Exception as e:
         st.error(f"Error de visualización: {str(e)}")
    
-    with st.expander("ℹ️ Cómo usar la visualización"):
-        st.markdown("""
-        **Controles Interactivos:**
-        - 🏠 **Inicio**: Restablecer vista
-        - 🔍 **Zoom**: Acercar/alejar
-        - ↔️ **Desplazar**: Arrastrar para mover
-        - 📷 **Cámara**: Descargar como PNG
-        - 🖱️ **Rueda**: Zoom con la rueda del ratón
-        - 🖐️ **Doble clic**: Restablecer zoom
-       
-        **Leyenda:**
-        - 🔵 **Círculo Azul (REF)**: Punto de referencia
-        - 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
-        - 🔴 **Círculos (A1, A2, ...)**: Puntos del polígono (de azimuts)
-        - 🟢 **X Verde**: Punto actual (vista previa)
-        - 🔵 **Línea Azul**: Perímetro del polígono (azimut)
-        - 🟢 **Línea Verde**: Perímetro del polígono (puntos ingresados)
-        - ➡️ **Flechas**: Dirección del polígono (azimut)
-        """)
 if __name__ == "__main__":
     main()
