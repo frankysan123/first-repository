@@ -13,6 +13,7 @@ import concurrent.futures
 from functools import lru_cache
 import gc
 import threading
+import os
 
 # Optional imports for performance monitoring
 try:
@@ -951,6 +952,59 @@ APP_CONFIG = {
     'initial_sidebar_state': "auto"
 }
 
+# === Persistencia de datos previos (azimuts y distancias) ===
+def _prev_batch_file_path():
+    try:
+        base_dir = os.path.dirname(__file__)
+    except NameError:
+        # Fallback si __file__ no está disponible
+        base_dir = os.getcwd()
+    return os.path.join(base_dir, 'azimuth_prev_batch.json')
+
+def save_previous_batch_data():
+    """Guarda los datos actuales de batch (Azimuth/Distance) en un archivo JSON.
+
+    Persiste en disco para que se puedan restaurar incluso después de recargar la página.
+    """
+    try:
+        if 'batch_data' not in st.session_state or st.session_state.batch_data is None:
+            return
+        records = st.session_state.batch_data.to_dict(orient='records')
+        payload = {
+            'app': 'azimuth_converter',
+            'version': '1.0',
+            'saved_at': datetime.now().isoformat(),
+            'data': records
+        }
+        with open(_prev_batch_file_path(), 'w', encoding='utf-8') as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        st.warning(f"No se pudieron guardar datos previos: {e}")
+
+def restore_previous_batch_data():
+    """Intenta restaurar los datos previos desde el archivo JSON.
+
+    Devuelve un DataFrame con columnas 'Azimuth' y 'Distance', o None si no existe o falla.
+    """
+    try:
+        file_path = _prev_batch_file_path()
+        if not os.path.exists(file_path):
+            return None
+        with open(file_path, 'r', encoding='utf-8') as f:
+            payload = json.load(f)
+        data = payload.get('data', [])
+        if not isinstance(data, list) or not data:
+            return None
+        # Validación básica de estructura
+        df = pd.DataFrame(data)
+        expected_cols = {'Azimuth', 'Distance'}
+        if not expected_cols.issubset(set(df.columns)):
+            return None
+        return df[['Azimuth', 'Distance']]
+    except Exception as e:
+        st.warning(f"No se pudieron restaurar datos previos: {e}")
+        return None
+
 def initialize_session_state():
     """Inicializar todas las variables de sesión"""
     if 'language' not in st.session_state:
@@ -1191,6 +1245,8 @@ def main():
             })
             st.session_state.batch_data = pd.concat([st.session_state.batch_data, new_row], ignore_index=True)
             st.session_state.form_counter += 1
+            # Guardar automáticamente los datos agregados para poder restaurarlos tras recargar
+            save_previous_batch_data()
             st.success("✅ ¡Entrada agregada!")
             st.rerun()
    
@@ -1202,10 +1258,16 @@ def main():
             st.rerun()
     with col2:
         if st.button("📝 Restablecer a Ejemplos"):
-            st.session_state.batch_data = pd.DataFrame({
-                'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
-                'Distance': [5.178, 1.000, 1.000, 1.000]
-            })
+            restored_df = restore_previous_batch_data()
+            if restored_df is not None and not restored_df.empty:
+                st.session_state.batch_data = restored_df
+                st.success("✅ Datos previos restaurados")
+            else:
+                st.session_state.batch_data = pd.DataFrame({
+                    'Azimuth': ["26 56 7.00", "90-0-0", "180:30:15.5", "270_45_30"],
+                    'Distance': [5.178, 1.000, 1.000, 1.000]
+                })
+                st.info("ℹ️ No hay datos previos guardados; se cargaron ejemplos")
             st.rerun()
    
     if st.button("🔄 Convertir Todo", type="primary", use_container_width=True):
