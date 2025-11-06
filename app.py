@@ -1257,7 +1257,7 @@ def main():
             st.session_state.batch_data = pd.DataFrame({'Azimuth': [], 'Distance': []})
             st.rerun()
     with col2:
-        if st.button("📝 Restablecer a Ejemplos"):
+        if st.button("📝 Restablecer Entradas"):
             restored_df = restore_previous_batch_data()
             if restored_df is not None and not restored_df.empty:
                 st.session_state.batch_data = restored_df
