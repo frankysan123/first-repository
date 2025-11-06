@@ -1115,7 +1115,7 @@ def main():
     bg_color = st.sidebar.selectbox("Fondo del Gráfico", ['Blanco', 'Negro'])
    
     # Batch Conversion Section
-    st.header(get_text('batch_conversion', lang))
+    # st.header(get_text('batch_conversion', lang))
    
     # Points management section
     st.subheader("📍 Gestión de Puntos")
