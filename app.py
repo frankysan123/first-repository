@@ -1448,7 +1448,7 @@ def main():
         st.error(f"Error de visualización: {str(e)}")
    
    
-       
+       st.markdown("""
         **Leyenda:**
         - 🔵 **Círculo Azul (REF)**: Punto de referencia
         - 🔴 **Diamantes (P1, P2, ...)**: Puntos ingresados directamente
