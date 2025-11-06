@@ -297,7 +297,6 @@ TRANSLATIONS = {
         'reference_y': 'Referencia Y',
         'reference_x_help': 'Coordenada X del punto de referencia',
         'reference_y_help': 'Coordenada Y del punto de referencia',
-        'batch_conversion': '📊 Conversión por Lotes',
         'azimuth_input_format': 'Formato de Entrada de Azimut',
         'dms_format': 'GMS (266°56\'7.24")',
         'decimal_format': 'Decimal (266.935)',
