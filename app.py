@@ -1202,7 +1202,7 @@ def main():
         st.info(get_text('enter_values', lang))
    
     st.markdown("---")
-    st.subheader("Carga de Datos por Lotes")
+    st.subheader("Entrada de Azimuts")
    
     # Removed the radio and CSV upload, only manual input
     st.subheader("")
